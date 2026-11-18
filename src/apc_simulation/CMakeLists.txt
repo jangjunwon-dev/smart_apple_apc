@@ -12,7 +12,7 @@ install(PROGRAMS scripts/apple_spawner_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY launch worlds config
+install(DIRECTORY launch worlds config models
   DESTINATION share/${PROJECT_NAME}
 )
 

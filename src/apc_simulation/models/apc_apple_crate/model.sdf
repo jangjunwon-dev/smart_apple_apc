@@ -1,0 +1,39 @@
+<?xml version="1.0" ?>
+<!-- 노란 플라스틱 사과 상자 (직접 제작, 단순 도형)
+     원점 = 상자 중심, 크기 0.58(x) x 0.38(y) x 0.28(z) m
+     장식용이라 static 으로 사용, collision 은 상자 전체 박스 1개 -->
+<sdf version="1.9">
+  <model name="apc_apple_crate">
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry><box><size>0.58 0.38 0.28</size></box></geometry>
+      </collision>
+      <visual name="bottom">
+        <pose>0 0 -0.13 0 0 0</pose>
+        <geometry><box><size>0.58 0.38 0.02</size></box></geometry>
+        <material><ambient>0.85 0.65 0.02 1</ambient><diffuse>0.85 0.65 0.02 1</diffuse></material>
+      </visual>
+      <visual name="wall_left">
+        <pose>0 0.1825 0 0 0 0</pose>
+        <geometry><box><size>0.58 0.015 0.28</size></box></geometry>
+        <material><ambient>1.0 0.8 0.05 1</ambient><diffuse>1.0 0.8 0.05 1</diffuse></material>
+      </visual>
+      <visual name="wall_right">
+        <pose>0 -0.1825 0 0 0 0</pose>
+        <geometry><box><size>0.58 0.015 0.28</size></box></geometry>
+        <material><ambient>1.0 0.8 0.05 1</ambient><diffuse>1.0 0.8 0.05 1</diffuse></material>
+      </visual>
+      <visual name="wall_front">
+        <pose>0.2825 0 0 0 0 0</pose>
+        <geometry><box><size>0.015 0.35 0.28</size></box></geometry>
+        <material><ambient>1.0 0.8 0.05 1</ambient><diffuse>1.0 0.8 0.05 1</diffuse></material>
+      </visual>
+      <visual name="wall_back">
+        <pose>-0.2825 0 0 0 0 0</pose>
+        <geometry><box><size>0.015 0.35 0.28</size></box></geometry>
+        <material><ambient>1.0 0.8 0.05 1</ambient><diffuse>1.0 0.8 0.05 1</diffuse></material>
+      </visual>
+    </link>
+  </model>
+</sdf>

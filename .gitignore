@@ -17,9 +17,10 @@ data/**
 !data/**/.gitkeep
 !data/README.md
 !data/sample/**
-models/*
-!models/.gitkeep
-!models/README.md
+# 루트 models/ 만 (src/apc_simulation/models/ 의 Gazebo 모델은 커밋)
+/models/*
+!/models/.gitkeep
+!/models/README.md
 *.pt
 *.onnx
 runs/
