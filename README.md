@@ -5,10 +5,10 @@
 
 | 항목 | 내용 |
 |---|---|
-| 개발 환경 | Windows 11 + **WSL2 Ubuntu 24.04** |
-| 미들웨어 | **ROS 2 Jazzy** (LTS, 2029년 5월까지 지원) |
-| 시뮬레이터 | **Gazebo Harmonic** (Jazzy 공식 페어) |
-| 비전 | Python 3.12, OpenCV, Ultralytics YOLO |
+| 개발 환경 | Windows 11 + **WSL2 Ubuntu 26.04 LTS** |
+| 미들웨어 | **ROS 2 Lyrical Luth** (LTS, 2031년 5월까지 지원) |
+| 시뮬레이터 | **Gazebo Jetty** (Lyrical 공식 페어) |
+| 비전 | Python 3.14, OpenCV, Ultralytics YOLO |
 | 주행 | Nav2 |
 | 협업 | GitHub (feature 브랜치 → PR → `main`) |
 | 공유 드라이브 | [Google Drive `smart_apple_apc`](https://drive.google.com/drive/folders/1pAv_fzKDRd6Efjm4E63q6t5o_J5rNcx2) — `data/` `models/` `발표·보고서/` `시연영상/` |
@@ -39,7 +39,7 @@
 # WSL Ubuntu 터미널에서
 git clone https://github.com/jangjunwon-dev/smart_apple_apc.git ~/apc_ws
 cd ~/apc_ws
-bash scripts/setup_ros2_jazzy.sh     # ROS 2 + Gazebo + Nav2 설치 (최초 1회)
+bash scripts/setup_ros2_lyrical.sh   # ROS 2 + Gazebo + Nav2 설치 (최초 1회)
 bash scripts/setup_python_env.sh     # 비전용 Python 가상환경 (최초 1회)
 bash scripts/check_env.sh            # 환경 점검 — 전부 ✅ 여야 함
 ```
@@ -48,7 +48,7 @@ bash scripts/check_env.sh            # 환경 점검 — 전부 ✅ 여야 함
 
 ```bash
 cd ~/apc_ws
-source /opt/ros/jazzy/setup.bash
+source /opt/ros/lyrical/setup.bash
 source .venv/bin/activate
 python -m colcon build --symlink-install
 source install/setup.bash

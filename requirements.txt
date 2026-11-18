@@ -1,7 +1,7 @@
 # Smart APC — 비전 파트 Python 패키지 (.venv 에 설치)
-# ⚠️ numpy 2.x 금지: ROS Jazzy cv_bridge 가 numpy 1.26 기준으로 빌드됨
-numpy>=1.26,<2
-opencv-python>=4.8,<4.12   # 4.12+ 는 numpy 2 를 요구
+# ⚠️ numpy 1.x 설치 금지: Ubuntu 26.04 / ROS Lyrical cv_bridge 는 시스템 numpy 2.x 기준으로 빌드됨
+numpy>=2,<3
+opencv-python>=4.12
 ultralytics>=8.3
 pandas>=2.0
 matplotlib>=3.8

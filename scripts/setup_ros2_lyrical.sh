@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Smart APC — ROS 2 Jazzy + Gazebo Harmonic + Nav2 설치 스크립트
-# 대상: WSL2 Ubuntu 24.04 (Noble)
-# 사용법: bash scripts/setup_ros2_jazzy.sh
+# Smart APC — ROS 2 Lyrical + Gazebo Jetty + Nav2 설치 스크립트
+# 대상: WSL2 Ubuntu 26.04 LTS (Resolute)
+# 사용법: bash scripts/setup_ros2_lyrical.sh
 # =============================================================================
 set -euo pipefail
 
-ROS_DISTRO_TARGET="jazzy"
+ROS_DISTRO_TARGET="lyrical"
 BASHRC="$HOME/.bashrc"
 MARK_BEGIN="# >>> smart_apple_apc >>>"
 MARK_END="# <<< smart_apple_apc <<<"
@@ -19,9 +19,9 @@ err()  { echo -e "\033[1;31m[ERR ]\033[0m $*" >&2; }
 # 0. OS 확인
 # ---------------------------------------------------------------------------
 . /etc/os-release
-if [[ "${VERSION_ID:-}" != "24.04" ]]; then
-  err "Ubuntu 24.04가 아닙니다 (현재: ${PRETTY_NAME:-unknown}). 팀 공통 환경은 Ubuntu 24.04입니다."
-  err "PowerShell에서: wsl --install -d Ubuntu-24.04"
+if [[ "${VERSION_ID:-}" != "26.04" ]]; then
+  err "Ubuntu 26.04가 아닙니다 (현재: ${PRETTY_NAME:-unknown}). 팀 공통 환경은 Ubuntu 26.04입니다."
+  err "PowerShell에서: wsl --install -d Ubuntu-26.04"
   exit 1
 fi
 ok "Ubuntu ${VERSION_ID} 확인"
@@ -59,7 +59,7 @@ fi
 # ---------------------------------------------------------------------------
 # 3. 패키지 설치
 # ---------------------------------------------------------------------------
-info "ROS 2 ${ROS_DISTRO_TARGET} + Gazebo Harmonic + Nav2 설치 (시간이 꽤 걸립니다)"
+info "ROS 2 ${ROS_DISTRO_TARGET} + Gazebo Jetty + Nav2 설치 (시간이 꽤 걸립니다)"
 sudo apt update
 sudo apt upgrade -y
 sudo apt install -y \
