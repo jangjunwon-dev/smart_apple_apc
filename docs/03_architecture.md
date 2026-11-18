@@ -100,7 +100,7 @@ ros2 run apc_vision grader_node --ros-args -p mock:=false   # 비전만 실제
 | 패키지 | 담당 | 다른 사람이 수정할 때 |
 |---|---|---|
 | `apc_interfaces` | 3명 공동 | Issue 합의 필수 |
-| `apc_vision` | 🅐 | PR 리뷰에 🅐 필수 |
-| `apc_amr` | 🅑 | PR 리뷰에 🅑 필수 |
-| `apc_simulation`, `apc_bringup` | 🅒 | PR 리뷰에 🅒 필수 |
+| `apc_vision` | 🅐 조한서 | PR 리뷰에 🅐 필수 |
+| `apc_amr` | 🅑 박해원 | PR 리뷰에 🅑 필수 |
+| `apc_simulation`, `apc_bringup` | 🅒 장준원 | PR 리뷰에 🅒 필수 |
 | `docs/`, `scripts/`, `AGENTS.md` | 3명 공동 | 리뷰 1명 |

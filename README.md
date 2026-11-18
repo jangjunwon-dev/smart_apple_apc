@@ -18,9 +18,9 @@
 
 | 파트 | 담당 | 주요 패키지 | 브랜치 접두어 |
 |---|---|---|---|
-| 🅐 사과 이미지 분석 (Vision) | _(이름 기입)_ | `apc_vision` | `feat/vision-*` |
-| 🅑 AMR 주행·물류 | _(이름 기입)_ | `apc_amr` | `feat/amr-*` |
-| 🅒 시뮬레이션·통합 | _(이름 기입)_ | `apc_simulation`, `apc_bringup` | `feat/sim-*` |
+| 🅐 사과 이미지 분석 (Vision) | **조한서** | `apc_vision` | `feat/vision-*` |
+| 🅑 AMR 주행·물류 | **박해원** | `apc_amr` | `feat/amr-*` |
+| 🅒 시뮬레이션·통합 | **장준원** (저장소 관리) | `apc_simulation`, `apc_bringup` | `feat/sim-*` |
 
 > 공통 인터페이스(`apc_interfaces`)는 **3명 합의 후에만** 수정합니다. → [docs/03_architecture.md](docs/03_architecture.md)
 

@@ -1,0 +1,5 @@
+# 파트별 리뷰 담당 — GitHub 아이디 확인 후 @아이디 로 교체
+# A 조한서: src/apc_vision/   B 박해원: src/apc_amr/   C 장준원: src/apc_simulation/ src/apc_bringup/
+*                     @jangjunwon-dev
+src/apc_simulation/   @jangjunwon-dev
+src/apc_bringup/      @jangjunwon-dev

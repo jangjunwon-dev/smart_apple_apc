@@ -32,7 +32,7 @@ claude
 - 내 파트 기억시키기 (개인 설정, 저장소에 안 올라감): `~/.claude/CLAUDE.md` 에 아래 추가
   ```markdown
   # 개인 설정
-  - smart_apple_apc 프로젝트에서 나는 🅐 Vision(apc_vision) 담당이다.
+  - smart_apple_apc 프로젝트에서 나는 조한서, 🅐 Vision(apc_vision) 담당이다.
   ```
 
 ### Codex (CLI / VS Code 확장)
@@ -66,7 +66,7 @@ cd ~/apc_ws && gemini
    ```
    이 프로젝트는 smart_apple_apc 저장소다. AGENTS.md의 규칙을 항상 따르고,
    답하기 전에 docs/02_roadmap.md로 현재 단계를 확인해라.
-   나는 [🅐 Vision / 🅑 AMR / 🅒 Sim·통합] 담당이다.
+   나는 [조한서=🅐 Vision / 박해원=🅑 AMR / 장준원=🅒 Sim·통합] 중 ○○○이다.
    ```
 
 ### ChatGPT
@@ -83,7 +83,7 @@ cd ~/apc_ws && gemini
 새 작업을 시작할 때 첫 메시지로 사용하세요.
 
 ```
-smart_apple_apc 프로젝트 작업이야. 나는 [🅐 Vision] 담당.
+smart_apple_apc 프로젝트 작업이야. 나는 조한서(🅐 Vision) 담당.
 AGENTS.md, docs/02_roadmap.md, docs/03_architecture.md 를 먼저 읽고
 1) 지금 내 파트에서 다음으로 할 일
 2) 그 작업을 위한 구체적인 단계와 명령어

@@ -130,9 +130,9 @@ ros2 run demo_nodes_py listener   # "I heard: [Hello World: N]" 출력되면 성
 
 | 파트 | ROS_DOMAIN_ID |
 |---|---|
-| 🅐 Vision | `11` |
-| 🅑 AMR | `12` |
-| 🅒 Sim/통합 | `13` |
+| 🅐 Vision (조한서) | `11` |
+| 🅑 AMR (박해원) | `12` |
+| 🅒 Sim/통합 (장준원) | `13` |
 
 ```bash
 export ROS_DOMAIN_ID=11

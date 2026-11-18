@@ -20,11 +20,11 @@
 - [x] 저장소·가이드·뼈대 코드 생성
 - [ ] 팀원 2명 Collaborator 초대 + `main` 보호 규칙
 - [ ] 3명 환경 구축 완료 (`check_env.sh` 결과 공유)
-- [ ] README 역할 표에 이름 기입
+- [x] README 역할 표에 이름 기입 (A 조한서, B 박해원, C 장준원)
 - [ ] 등급 기준(지름·결함 비율) 확정 → 아래 "결정 사항"에 기록
 - [ ] 인터페이스(`AppleGrade`, `AmrStatus`) 최종 합의
 
-### 🅐 사과 이미지 분석 (`apc_vision`)
+### 🅐 사과 이미지 분석 (`apc_vision`) — 조한서
 - [ ] 공공데이터(AI Hub 등) 사과 품질/결함 이미지 데이터 확보 → 공유 드라이브
 - [ ] 데이터 전처리 + 라벨 형식(YOLO) 정리
 - [ ] YOLO 학습 (검출 또는 분할) — GPU 없으면 Colab
@@ -33,7 +33,7 @@
 - [ ] 같은 사과 중복 판정 방지
 - [ ] 정확도 지표(mAP, 등급 정확도) 표 작성
 
-### 🅑 AMR 주행·물류 (`apc_amr`)
+### 🅑 AMR 주행·물류 (`apc_amr`) — 박해원
 - [ ] Nav2 튜토리얼 (`nav2_bringup` TurtleBot4 시뮬레이션) 실행해보기
 - [ ] APC 월드용 맵 생성 (SLAM 또는 직접 작성)
 - [ ] `NavigateToPose` 액션 클라이언트 구현 (`_send_nav_goal`)
@@ -41,7 +41,7 @@
 - [ ] 작업 큐 정책 (FIFO → 필요 시 등급 우선순위)
 - [ ] 운반 성능 지표 (작업당 소요 시간, 처리량)
 
-### 🅒 시뮬레이션·통합 (`apc_simulation`, `apc_bringup`)
+### 🅒 시뮬레이션·통합 (`apc_simulation`, `apc_bringup`) — 장준원
 - [ ] 월드 구체화: 컨베이어 이동, 사과 주기적 스폰
 - [ ] 카메라 → `/apc/camera/image_raw` 브리지 확인 (`rqt_image_view`)
 - [ ] AMR 로봇 모델 월드에 추가 (+ `/cmd_vel`, `/odom`, `/scan` 브리지)

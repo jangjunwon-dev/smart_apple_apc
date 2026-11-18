@@ -91,9 +91,9 @@ rosdep update
 # ---------------------------------------------------------------------------
 echo
 echo "팀 파트를 선택하세요 (ROS_DOMAIN_ID 결정):"
-echo "  1) 🅐 Vision     → 11"
-echo "  2) 🅑 AMR        → 12"
-echo "  3) 🅒 Sim/통합   → 13"
+echo "  1) 🅐 Vision   (조한서) → 11"
+echo "  2) 🅑 AMR      (박해원) → 12"
+echo "  3) 🅒 Sim/통합 (장준원) → 13"
 read -r -p "번호 입력 [1-3] (기본 3): " PART
 case "${PART:-3}" in
   1) DOMAIN_ID=11 ;;
