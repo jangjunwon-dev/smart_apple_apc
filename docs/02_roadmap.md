@@ -42,8 +42,8 @@
 - [ ] 운반 성능 지표 (작업당 소요 시간, 처리량)
 
 ### 🅒 시뮬레이션·통합 (`apc_simulation`, `apc_bringup`) — 장준원
-- [ ] 월드 구체화: 컨베이어 이동, 사과 주기적 스폰
-- [ ] 카메라 → `/apc/camera/image_raw` 브리지 확인 (`rqt_image_view`)
+- [x] 월드 구체화: 컨베이어 이동, 사과 주기적 스폰
+- [x] 카메라 → `/apc/camera/image_raw` 브리지 확인 (`rqt_image_view`, 10Hz 확인)
 - [ ] AMR 로봇 모델 월드에 추가 (+ `/cmd_vel`, `/odom`, `/scan` 브리지)
 - [ ] 구역 좌표 ↔ `zones.yaml` 일치
 - [ ] `apc_all.launch.py` 로 전체 실행
