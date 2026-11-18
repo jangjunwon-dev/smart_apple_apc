@@ -212,7 +212,9 @@ bash scripts/check_env.sh
 
 | 증상 | 원인/해결 |
 |---|---|
-| `gz sim` 창이 검은색 / 바로 꺼짐 | GPU 가속 문제. `export LIBGL_ALWAYS_SOFTWARE=1` 후 재실행 (느리지만 동작). NVIDIA라면 `export MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA` 시도 |
+| Gazebo가 느림(오른쪽 아래 RTF 60% 안팎) | CPU로 렌더링 중. `glxinfo -B \| grep renderer`가 `llvmpipe`면 `~/.bashrc`에 `export GALLIUM_DRIVER=d3d12`와 (NVIDIA면) `export MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA` 추가 → `D3D12 (NVIDIA ...)`로 바뀌면 성공 (RTF ~100%). 설치 스크립트가 자동으로 넣어 줌. (로그의 `libEGL warning: ... kms_swrast` 는 설정 후에도 나올 수 있으며 RTF 가 ~100% 면 무시) `glxinfo`는 `sudo apt install -y mesa-utils` |
+| 로그에 `libEGL warning: ... /dev/dri/...: Permission denied` | `sudo usermod -aG render,video $USER` → PowerShell에서 `wsl --shutdown` 후 재접속 |
+| `gz sim` 창이 검은색 / 바로 꺼짐 | GPU 드라이버 문제. 위 `GALLIUM_DRIVER` 줄을 지우고 `export LIBGL_ALWAYS_SOFTWARE=1` 후 재실행 (느리지만 동작) |
 | GUI 창이 아예 안 뜸 | PowerShell에서 `wsl --update` → `wsl --shutdown` 후 재시작 (WSLg 업데이트) |
 | `ros2: command not found` | 새 터미널을 안 열었음 → `source ~/.bashrc` |
 | `colcon build`가 매우 느림 | 저장소가 `/mnt/c/` 아래에 있음 → `~/apc_ws`로 다시 클론 |
