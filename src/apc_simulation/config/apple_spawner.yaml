@@ -1,0 +1,19 @@
+# apple_spawner_node 파라미터
+# 간격 = spawn_period × belt_speed = 4.0 × 0.3 = 1.2 m
+#   > 카메라 시야 폭(높이차 0.8 m, FOV 1.047 rad → 약 0.92 m) → 화면에 사과가 한 번에 1개
+# belt_speed, spawn_period 는 실행 중 ros2 param set 으로 변경 가능
+apple_spawner:
+  ros__parameters:
+    mock: false
+    world_name: apc_world
+    belt_speed: 0.3        # m/s, +x 방향
+    spawn_period: 4.0      # s
+    spawn_x: -3.35         # 컨베이어 시작(x=-3.5) 바로 안쪽
+    spawn_y: 0.0
+    belt_top_z: 0.8
+    # 삭제: 컨베이어 끝 아래 논리 카메라(/apc/sim/apple_sink)에 잡힌 사과를 삭제
+    max_lifetime: 40.0     # s, 옆으로 떨어지는 등 감지 실패 대비 안전 삭제 (0 이하 = 사용 안 함)
+    radius_min: 0.035
+    radius_max: 0.048
+    max_apples: 6
+    seed: -1               # -1 = 매번 무작위, 0 이상 = 재현 가능

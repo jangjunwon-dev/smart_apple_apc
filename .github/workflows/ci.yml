@@ -20,7 +20,7 @@ jobs:
           apt-get update
           rosdep update
           rosdep install --from-paths src --ignore-src -y \
-            --skip-keys "ros_gz_sim ros_gz_bridge cv_bridge nav2_msgs"
+            --skip-keys "ros_gz_sim ros_gz_bridge ros_gz_interfaces cv_bridge nav2_msgs"
           apt-get install -y python3-pytest
 
       - name: 빌드
@@ -32,5 +32,5 @@ jobs:
         run: |
           source /opt/ros/lyrical/setup.bash
           source install/setup.bash
-          colcon test --packages-select apc_vision apc_amr
+          colcon test --packages-select apc_vision apc_amr apc_simulation
           colcon test-result --verbose
