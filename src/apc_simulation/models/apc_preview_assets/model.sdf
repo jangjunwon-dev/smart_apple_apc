@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<!-- scripts/gen_preview_world.py 로 생성: 에폭시 바닥 재질 견본 -->
+<sdf version="1.9">
+  <model name="apc_preview_assets"><static>true</static>
+    <link name="l"><visual name="epoxy_sample"><pose>0 0 0.002 0 0 0</pose><geometry><box><size>1 1 0.004</size></box></geometry><material><ambient>0.3 0.7 0.42 1</ambient><diffuse>0.3 0.7 0.42 1</diffuse><specular>0.2 0.2 0.2 1</specular><pbr><metal><albedo_map>model://apc_preview_assets/materials/textures/Concrete034_1K-JPG_Color.jpg</albedo_map><normal_map>model://apc_preview_assets/materials/textures/Concrete034_1K-JPG_NormalGL.jpg</normal_map><roughness_map>model://apc_preview_assets/materials/textures/Concrete034_1K-JPG_Roughness.jpg</roughness_map><roughness>0.45</roughness><metalness>0.0</metalness></metal></pbr></material></visual></link>
+  </model>
+</sdf>
