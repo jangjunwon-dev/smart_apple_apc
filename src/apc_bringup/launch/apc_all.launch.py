@@ -1,6 +1,9 @@
 """전체 실행: Gazebo 월드 + 비전 + AMR.
 
 ros2 launch apc_bringup apc_all.launch.py vision_mock:=false amr_mock:=true
+ros2 launch apc_bringup apc_all.launch.py world:=apc_world_v2_preview.sdf headless:=true
+  - world, headless, spawn_apples 는 apc_simulation/sim.launch.py 로 그대로 넘김
+    (기본값도 sim.launch.py 와 같음 → 인자 없이 실행하면 이전과 동작 동일)
 """
 import os
 
@@ -12,6 +15,13 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
+# sim.launch.py 로 넘기는 인자: (이름, 기본값, 설명) — 기본값은 sim.launch.py 와 같게 유지
+SIM_ARGS = [
+    ('world', 'apc_world.sdf', 'worlds/ 안의 월드 파일 이름 또는 절대 경로'),
+    ('headless', 'false', 'true 면 GUI 없이 gz sim 서버만 실행'),
+    ('spawn_apples', 'true', '사과 주기적 생성/삭제 노드 실행 여부'),
+]
+
 
 def generate_launch_description():
     sim_launch = os.path.join(
@@ -21,10 +31,16 @@ def generate_launch_description():
     vision_mock = ParameterValue(LaunchConfiguration('vision_mock'), value_type=bool)
     amr_mock = ParameterValue(LaunchConfiguration('amr_mock'), value_type=bool)
 
+    sim_arg_decls = [DeclareLaunchArgument(name, default_value=default, description=desc)
+                     for name, default, desc in SIM_ARGS]
+    sim_launch_args = {name: LaunchConfiguration(name) for name, _, _ in SIM_ARGS}
+
     return LaunchDescription([
         DeclareLaunchArgument('vision_mock', default_value='true'),
         DeclareLaunchArgument('amr_mock', default_value='true'),
-        IncludeLaunchDescription(PythonLaunchDescriptionSource(sim_launch)),
+        *sim_arg_decls,
+        IncludeLaunchDescription(PythonLaunchDescriptionSource(sim_launch),
+                                 launch_arguments=sim_launch_args.items()),
         Node(package='apc_vision', executable='grader_node', name='grader_node',
              parameters=[{'mock': vision_mock, 'use_sim_time': True}], output='screen'),
         Node(package='apc_amr', executable='task_manager_node', name='task_manager_node',
