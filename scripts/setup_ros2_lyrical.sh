@@ -128,7 +128,9 @@ alias apcb='cd ~/apc_ws && python -m colcon build --symlink-install && source in
 # WSL GPU 렌더링: 기본값은 CPU(llvmpipe)라 Gazebo가 느림(RTF ~60%) → D3D12(GPU) 사용
 export GALLIUM_DRIVER=d3d12
 ${GPU_ADAPTER_LINE}
-# Gazebo 화면이 검게 나오면 위 두 줄을 지우고 아래 주석 해제 (느리지만 동작)
+# WSLg 에서 RViz·rqt(Qt) 창을 X11 방식으로 — 없으면 RViz가 'Invalid parentWindowHandle'로 죽고 rqt 클릭이 안 됨
+export QT_QPA_PLATFORM=xcb
+# Gazebo 화면이 검게 나오면 위 GALLIUM_DRIVER·MESA_D3D12 줄을 지우고 아래 주석 해제 (느리지만 동작)
 # export LIBGL_ALWAYS_SOFTWARE=1
 $MARK_END
 EOF
