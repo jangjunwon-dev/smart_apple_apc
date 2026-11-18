@@ -74,7 +74,8 @@ sudo apt install -y \
   ros-${ROS_DISTRO_TARGET}-teleop-twist-keyboard \
   python3-colcon-common-extensions \
   python3-venv \
-  python3-pip
+  python3-pip \
+  mesa-utils
 ok "패키지 설치 완료"
 
 # ---------------------------------------------------------------------------
@@ -101,6 +102,13 @@ case "${PART:-3}" in
   *) DOMAIN_ID=13 ;;
 esac
 
+# NVIDIA GPU가 있으면(노트북의 Intel 내장 그래픽 대신) NVIDIA로 렌더링
+if command -v nvidia-smi >/dev/null 2>&1; then
+  GPU_ADAPTER_LINE="export MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA"
+else
+  GPU_ADAPTER_LINE="# (NVIDIA GPU 없음 — 기본 GPU 사용)"
+fi
+
 if grep -qF "$MARK_BEGIN" "$BASHRC"; then
   sed -i "/$MARK_BEGIN/,/$MARK_END/d" "$BASHRC"
 fi
@@ -117,7 +125,10 @@ export RCUTILS_COLORIZED_OUTPUT=1
 # 워크스페이스 단축 명령
 alias apc='cd ~/apc_ws && source /opt/ros/${ROS_DISTRO_TARGET}/setup.bash && [ -f .venv/bin/activate ] && source .venv/bin/activate; [ -f install/setup.bash ] && source install/setup.bash'
 alias apcb='cd ~/apc_ws && python -m colcon build --symlink-install && source install/setup.bash'
-# Gazebo 화면이 검게 나오면 아래 주석 해제
+# WSL GPU 렌더링: 기본값은 CPU(llvmpipe)라 Gazebo가 느림(RTF ~60%) → D3D12(GPU) 사용
+export GALLIUM_DRIVER=d3d12
+${GPU_ADAPTER_LINE}
+# Gazebo 화면이 검게 나오면 위 두 줄을 지우고 아래 주석 해제 (느리지만 동작)
 # export LIBGL_ALWAYS_SOFTWARE=1
 $MARK_END
 EOF
