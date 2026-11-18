@@ -1,0 +1,4 @@
+timestamp,session_id,model_file,algorithm,val_mAP50,val_precision,val_recall,apple_id,grade_code,grade_name,confidence,diameter_mm,defect_ratio,inference_ms
+2026-11-18 12:42:20.229,20261118_124215,apple_grader.pt,yolo11s,0.681,0.569,0.781,1,2,보통,0.6190,149.90,0.080,4802.53
+2026-11-18 12:42:20.264,20261118_124215,apple_grader.pt,yolo11s,0.681,0.569,0.781,2,2,보통,0.9350,149.92,0.080,11.39
+2026-11-18 12:42:20.293,20261118_124215,apple_grader.pt,yolo11s,0.681,0.569,0.781,3,2,보통,0.9540,149.93,0.080,10.01
