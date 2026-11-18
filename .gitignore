@@ -11,10 +11,15 @@ __pycache__/
 .pytest_cache/
 
 # 데이터·모델 (공유 드라이브 사용)
-data/*
-!data/.gitkeep
+# data/ : 폴더 구조와 설명서만 커밋, 실제 데이터는 공유 드라이브
+data/**
+!data/**/
+!data/**/.gitkeep
+!data/README.md
+!data/sample/**
 models/*
 !models/.gitkeep
+!models/README.md
 *.pt
 *.onnx
 runs/

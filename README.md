@@ -70,8 +70,11 @@ smart_apple_apc/              (= ~/apc_ws, colcon 워크스페이스 루트)
 ├── docs/                     # 가이드·계획·설계 문서
 ├── scripts/                  # 설치·점검 스크립트
 ├── requirements.txt          # 비전 파트 Python 패키지
-├── data/                     # 데이터셋 (git 제외, 공유 드라이브 사용)
-├── models/                   # 학습된 가중치 (git 제외)
+├── data/                     # 데이터셋 — 구조·설명서만 커밋 (data/README.md)
+│   ├── sample/               #   테스트용 소량 샘플 (커밋 O)
+│   ├── raw/                  #   원본 (공유 드라이브)
+│   └── processed/            #   가공본 (공유 드라이브)
+├── models/                   # 학습된 가중치 (공유 드라이브, models/README.md)
 └── src/
     ├── apc_interfaces/       # 공통 메시지 정의 (AppleGrade, AmrStatus)
     ├── apc_vision/           # 🅐 사과 등급 판정 노드

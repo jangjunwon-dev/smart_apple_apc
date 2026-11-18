@@ -30,7 +30,8 @@ src/apc_simulation  🅒 Gazebo 월드/launch (ament_cmake)
 src/apc_bringup     🅒 전체 실행 launch (ament_cmake)
 docs/               환경·Git·로드맵·아키텍처·AI 가이드
 scripts/            설치·점검 스크립트
-data/, models/      git 제외 (데이터·가중치는 공유 드라이브)
+data/               sample/(커밋) raw/·processed/(공유 드라이브) — 규칙은 data/README.md
+models/             가중치(공유 드라이브) — 기록은 models/README.md
 ```
 
 ## 4. 빌드 / 실행 / 테스트 명령
