@@ -1,0 +1,10 @@
+# 등급별 적재 구역 좌표 (map 좌표계, m)
+# TODO(🅒/🅑): Gazebo 월드(apc_world.sdf)의 구역 위치와 맞출 것
+task_manager_node:
+  ros__parameters:
+    robot_id: amr_1
+    mock_travel_sec: 5.0
+    zone_ZONE_A_xy: [4.0, 2.0]    # 특
+    zone_ZONE_B_xy: [4.0, 0.0]    # 상
+    zone_ZONE_C_xy: [4.0, -2.0]   # 보통
+    zone_ZONE_R_xy: [0.0, -3.0]   # 비상품

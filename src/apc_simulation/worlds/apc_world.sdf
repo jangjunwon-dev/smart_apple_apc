@@ -1,0 +1,114 @@
+<?xml version="1.0" ?>
+<!--
+  Smart APC 기본 월드 (Gazebo Harmonic)
+  - 컨베이어(정적 박스) + 상단 카메라 + 사과(구) + 등급별 적재 구역 표시
+  - 구역 좌표는 src/apc_amr/config/zones.yaml 과 일치시킬 것
+  TODO(🅒): 컨베이어 이동, 사과 스폰, AMR(TurtleBot4 등) 추가, Nav2 맵 생성
+-->
+<sdf version="1.9">
+  <world name="apc_world">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- 바닥 -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>30 30</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>30 30</size></plane></geometry>
+          <material><ambient>0.7 0.7 0.7 1</ambient><diffuse>0.7 0.7 0.7 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 컨베이어 (정적) -->
+    <model name="conveyor">
+      <static>true</static>
+      <pose>-2 0 0.4 0 0 0</pose>
+      <link name="belt">
+        <collision name="collision"><geometry><box><size>3.0 0.5 0.8</size></box></geometry></collision>
+        <visual name="visual">
+          <geometry><box><size>3.0 0.5 0.8</size></box></geometry>
+          <material><ambient>0.15 0.15 0.15 1</ambient><diffuse>0.15 0.15 0.15 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 선별 카메라: 컨베이어 위에서 아래를 봄 -->
+    <model name="grading_camera">
+      <static>true</static>
+      <pose>-2 0 1.6 0 1.5707 0</pose>
+      <link name="camera_link">
+        <visual name="visual"><geometry><box><size>0.08 0.08 0.08</size></box></geometry></visual>
+        <sensor name="camera" type="camera">
+          <camera>
+            <horizontal_fov>1.047</horizontal_fov>
+            <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+            <clip><near>0.05</near><far>10</far></clip>
+          </camera>
+          <always_on>1</always_on>
+          <update_rate>15</update_rate>
+          <visualize>true</visualize>
+          <topic>apc/camera/image_raw</topic>
+        </sensor>
+      </link>
+    </model>
+
+    <!-- 테스트용 사과 -->
+    <model name="apple_1">
+      <pose>-2.5 0 0.85 0 0 0</pose>
+      <link name="link">
+        <inertial><mass>0.25</mass></inertial>
+        <collision name="collision"><geometry><sphere><radius>0.045</radius></sphere></geometry></collision>
+        <visual name="visual">
+          <geometry><sphere><radius>0.045</radius></sphere></geometry>
+          <material><ambient>0.8 0.05 0.05 1</ambient><diffuse>0.8 0.05 0.05 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name="apple_2">
+      <pose>-1.8 0.1 0.85 0 0 0</pose>
+      <link name="link">
+        <inertial><mass>0.2</mass></inertial>
+        <collision name="collision"><geometry><sphere><radius>0.035</radius></sphere></geometry></collision>
+        <visual name="visual">
+          <geometry><sphere><radius>0.035</radius></sphere></geometry>
+          <material><ambient>0.6 0.3 0.05 1</ambient><diffuse>0.6 0.3 0.05 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 등급별 적재 구역 (바닥 표시) -->
+    <model name="zone_A"><static>true</static><pose>4 2 0.005 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>1 1 0.01</size></box></geometry>
+        <material><ambient>0.1 0.6 0.1 1</ambient><diffuse>0.1 0.6 0.1 1</diffuse></material></visual></link></model>
+    <model name="zone_B"><static>true</static><pose>4 0 0.005 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>1 1 0.01</size></box></geometry>
+        <material><ambient>0.1 0.3 0.8 1</ambient><diffuse>0.1 0.3 0.8 1</diffuse></material></visual></link></model>
+    <model name="zone_C"><static>true</static><pose>4 -2 0.005 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>1 1 0.01</size></box></geometry>
+        <material><ambient>0.9 0.7 0.1 1</ambient><diffuse>0.9 0.7 0.1 1</diffuse></material></visual></link></model>
+    <model name="zone_R"><static>true</static><pose>0 -3 0.005 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>1 1 0.01</size></box></geometry>
+        <material><ambient>0.7 0.1 0.1 1</ambient><diffuse>0.7 0.1 0.1 1</diffuse></material></visual></link></model>
+  </world>
+</sdf>

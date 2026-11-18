@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-24.04
+    container: ros:jazzy-ros-base
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 의존성 설치
+        run: |
+          apt-get update
+          rosdep update
+          rosdep install --from-paths src --ignore-src -y \
+            --skip-keys "ros_gz_sim ros_gz_bridge cv_bridge nav2_msgs"
+          apt-get install -y python3-pytest
+
+      - name: 빌드
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build --event-handlers console_direct+
+
+      - name: 테스트
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
+          colcon test --packages-select apc_vision apc_amr
+          colcon test-result --verbose
