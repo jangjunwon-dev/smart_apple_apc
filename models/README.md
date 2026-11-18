@@ -6,7 +6,7 @@
 - `grader_node`의 기본 모델 경로: `models/apple_grader.pt` (파라미터 `model_path`로 변경 가능)
 
 ## 공유 드라이브
-- 위치: _(링크 기입)_
+- 위치: [Google Drive `smart_apple_apc/models`](https://drive.google.com/drive/folders/1pAv_fzKDRd6Efjm4E63q6t5o_J5rNcx2) (팀원 3명에게만 공유)
 
 ## 📋 모델 기록
 

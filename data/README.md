@@ -26,7 +26,7 @@ data/
 
 ## 🔗 공유 드라이브
 
-- 위치: _(링크 기입 — 예: Google Drive `smart_apple_apc/data`)_
+- 위치: [Google Drive `smart_apple_apc/data`](https://drive.google.com/drive/folders/1pAv_fzKDRd6Efjm4E63q6t5o_J5rNcx2) (팀원 3명에게만 공유)
 - 받은 뒤 위 구조 그대로 `~/apc_ws/data/` 아래에 풀기
 
 ## 📋 데이터셋 기록 (새 데이터를 추가하면 한 줄씩 기록)

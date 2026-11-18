@@ -11,6 +11,7 @@
 | 비전 | Python 3.12, OpenCV, Ultralytics YOLO |
 | 주행 | Nav2 |
 | 협업 | GitHub (feature 브랜치 → PR → `main`) |
+| 공유 드라이브 | [Google Drive `smart_apple_apc`](https://drive.google.com/drive/folders/1pAv_fzKDRd6Efjm4E63q6t5o_J5rNcx2) — `data/` `models/` `발표·보고서/` `시연영상/` |
 
 ---
 
