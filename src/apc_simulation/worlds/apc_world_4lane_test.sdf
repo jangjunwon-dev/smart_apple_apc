@@ -1,0 +1,505 @@
+<?xml version="1.0" ?>
+<!--
+  Smart APC 4레인 성능 측정용 시험 월드 (Gazebo Jetty) — apc_world.sdf 복사본
+  ※ 성능 측정(scripts/bench_sim.sh) 전용. 기본 launch 는 apc_world.sdf 를 사용
+  ※ world 이름은 apc_world 그대로 (기존 브리지·스포너 재사용)
+  ※ 레인 4개·밀어내기 장치 4개는 파일 끝 [4레인 시험] 블록
+  - 컨베이어(TrackController 로 벨트 이동) + 상단 카메라 + 등급별 적재 구역 표시
+  - 사과는 apple_spawner_node 가 /world/apc_world/create 로 주기적으로 생성·삭제
+  - 컨베이어 끝 아래의 논리 카메라(apple_sink)가 떨어진 사과 이름을 발행 → 노드가 삭제
+  - 벨트 속도: /model/conveyor/link/belt/track_cmd_vel (gz.msgs.Double, m/s)
+  - 구역 좌표는 src/apc_amr/config/zones.yaml 과 일치시킬 것
+  TODO(🅒): AMR(TurtleBot4 등) 추가, Nav2 맵 생성
+-->
+<sdf version="1.9">
+  <world name="apc_world">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <!-- 논리 카메라: 시야 안 모델 이름·위치 발행 (사과 삭제 판정용) -->
+    <plugin filename="gz-sim-logical-camera-system" name="gz::sim::systems::LogicalCamera"/>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- 바닥 -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>30 30</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>30 30</size></plane></geometry>
+          <material><ambient>0.7 0.7 0.7 1</ambient><diffuse>0.7 0.7 0.7 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 컨베이어: 길이 3.0m (x -3.5 ~ -0.5), 폭 0.5m, 윗면 z=0.8
+         공식 예제(gz-sim worlds/conveyor.sdf)처럼 정적 링크 + TrackController 로 표면 속도 부여 -->
+    <model name="conveyor">
+      <static>true</static>
+      <pose>-2 0 0.4 0 0 0</pose>
+      <link name="belt">
+        <collision name="collision">
+          <geometry><box><size>3.0 0.5 0.8</size></box></geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.7</mu>
+                <mu2>150</mu2>
+                <fdir1>0 1 0</fdir1>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>3.0 0.5 0.8</size></box></geometry>
+          <material><ambient>0.15 0.15 0.15 1</ambient><diffuse>0.15 0.15 0.15 1</diffuse></material>
+        </visual>
+      </link>
+      <!-- 가이드 레일: 벨트와 다른 링크여야 TrackController 영향을 받지 않음
+           [4레인 시험] 레인 입구마다 0.2m 틈 (밀어내기 판·사과가 지나가도록) -->
+      <link name="guides">
+        <collision name="left_0_collision"><pose>-0.500 0.26 0.43 0 0 0</pose><geometry><box><size>2.000 0.02 0.06</size></box></geometry></collision>
+        <visual name="left_0_visual"><pose>-0.500 0.26 0.43 0 0 0</pose><geometry><box><size>2.000 0.02 0.06</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="left_1_collision"><pose>0.725 0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry></collision>
+        <visual name="left_1_visual"><pose>0.725 0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="left_2_collision"><pose>0.975 0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry></collision>
+        <visual name="left_2_visual"><pose>0.975 0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="left_3_collision"><pose>1.225 0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry></collision>
+        <visual name="left_3_visual"><pose>1.225 0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="left_4_collision"><pose>1.475 0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry></collision>
+        <visual name="left_4_visual"><pose>1.475 0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="right_0_collision"><pose>-0.500 -0.26 0.43 0 0 0</pose><geometry><box><size>2.000 0.02 0.06</size></box></geometry></collision>
+        <visual name="right_0_visual"><pose>-0.500 -0.26 0.43 0 0 0</pose><geometry><box><size>2.000 0.02 0.06</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="right_1_collision"><pose>0.725 -0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry></collision>
+        <visual name="right_1_visual"><pose>0.725 -0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="right_2_collision"><pose>0.975 -0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry></collision>
+        <visual name="right_2_visual"><pose>0.975 -0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="right_3_collision"><pose>1.225 -0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry></collision>
+        <visual name="right_3_visual"><pose>1.225 -0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="right_4_collision"><pose>1.475 -0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry></collision>
+        <visual name="right_4_visual"><pose>1.475 -0.26 0.43 0 0 0</pose><geometry><box><size>0.050 0.02 0.06</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+      </link>
+      <plugin filename="gz-sim-track-controller-system"
+              name="gz::sim::systems::TrackController">
+        <link>belt</link>
+        <odometry_publish_frequency>1</odometry_publish_frequency>
+      </plugin>
+    </model>
+
+    <!-- 선별 카메라: 컨베이어 위에서 아래를 봄 -->
+    <model name="grading_camera">
+      <static>true</static>
+      <pose>-2 0 1.6 0 1.5707 0</pose>
+      <link name="camera_link">
+        <visual name="visual"><geometry><box><size>0.08 0.08 0.08</size></box></geometry></visual>
+        <sensor name="camera" type="camera">
+          <camera>
+            <horizontal_fov>1.047</horizontal_fov>
+            <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+            <clip><near>0.05</near><far>10</far></clip>
+          </camera>
+          <always_on>1</always_on>
+          <update_rate>15</update_rate>
+          <visualize>true</visualize>
+          <topic>apc/camera/image_raw</topic>
+        </sensor>
+      </link>
+    </model>
+
+    <!-- 사과 수거 지점: 컨베이어 끝(x=-0.5)에서 떨어지는 사과를 감지하는 논리 카메라
+         z=0.9 에서 아래를 봄. 벨트 윗면(z=0.8) 높이에서는 시야가 x≈-0.32~-0.18 로 좁아
+         벨트 위 사과는 잡히지 않고, 바닥(z=0)에서는 x≈-0.86~0.36 을 덮음 -->
+    <model name="apple_sink">
+      <static>true</static>
+      <pose>-0.25 0 0.9 0 1.5707 0</pose>
+      <link name="sink_link">
+        <sensor name="apple_sink_camera" type="logical_camera">
+          <update_rate>10</update_rate>
+          <logical_camera>
+            <near>0.05</near>
+            <far>1.0</far>
+            <horizontal_fov>1.2</horizontal_fov>
+            <aspect_ratio>1.0</aspect_ratio>
+          </logical_camera>
+          <always_on>1</always_on>
+          <topic>apc/sim/apple_sink</topic>
+        </sensor>
+      </link>
+    </model>
+
+    <!-- 등급별 적재 구역 (바닥 표시) -->
+    <model name="zone_A"><static>true</static><pose>4 2 0.005 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>1 1 0.01</size></box></geometry>
+        <material><ambient>0.1 0.6 0.1 1</ambient><diffuse>0.1 0.6 0.1 1</diffuse></material></visual></link></model>
+    <model name="zone_B"><static>true</static><pose>4 0 0.005 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>1 1 0.01</size></box></geometry>
+        <material><ambient>0.1 0.3 0.8 1</ambient><diffuse>0.1 0.3 0.8 1</diffuse></material></visual></link></model>
+    <model name="zone_C"><static>true</static><pose>4 -2 0.005 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>1 1 0.01</size></box></geometry>
+        <material><ambient>0.9 0.7 0.1 1</ambient><diffuse>0.9 0.7 0.1 1</diffuse></material></visual></link></model>
+    <model name="zone_R"><static>true</static><pose>0 -3 0.005 0 0 0</pose>
+      <link name="l"><visual name="v"><geometry><box><size>1 1 0.01</size></box></geometry>
+        <material><ambient>0.7 0.1 0.1 1</ambient><diffuse>0.7 0.1 0.1 1</diffuse></material></visual></link></model>
+
+    <!-- ================= [4레인 시험] 성능 측정용 추가 요소 =================
+         등급별 배출 레인 4개(특/상/보통/비상품) + 밀어내기 장치 4개(prismatic + JointPositionController)
+         왕복: /apc/bench/tick(Int32) 1 ↔ 2 를 TriggeredPublisher 가 1초 지연으로 서로 발행해 스스로 진동
+               (bench_sim.sh 가 시작할 때 data:1 을 한 번 보내 순환 시작)
+         레인 끝 logical_camera 는 apc/sim/apple_sink 로 발행 → 배출된 사과도 스포너가 삭제 -->
+    <model name="bench_ticker">
+      <static>true</static>
+      <link name="l"/>
+      <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+        <input type="gz.msgs.Int32" topic="/apc/bench/tick"><match field="data">1</match></input>
+        <output type="gz.msgs.Int32" topic="/apc/bench/tick">data: 2</output>
+        <delay_ms>1000</delay_ms>
+      </plugin>
+      <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+        <input type="gz.msgs.Int32" topic="/apc/bench/tick"><match field="data">2</match></input>
+        <output type="gz.msgs.Int32" topic="/apc/bench/tick">data: 1</output>
+        <delay_ms>1000</delay_ms>
+      </plugin>
+    </model>
+
+    <!-- 배출 레인: special -->
+    <model name="lane_special">
+      <static>true</static>
+      <pose>-1.4 0 0 0 0 0</pose>
+      <link name="chute">
+        <collision name="slide_collision"><pose>0 -0.635 0.565 0.5323 0 0</pose><geometry><box><size>0.2 0.847 0.02</size></box></geometry><surface><friction><ode><mu>0.1</mu><mu2>0.1</mu2></ode></friction></surface></collision>
+        <visual name="slide_visual"><pose>0 -0.635 0.565 0.5323 0 0</pose><geometry><box><size>0.2 0.847 0.02</size></box></geometry><material><ambient>0.1 0.6 0.1 1</ambient><diffuse>0.1 0.6 0.1 1</diffuse></material></visual>
+        <collision name="wall_l_collision"><pose>-0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><surface><friction><ode><mu>0.1</mu><mu2>0.1</mu2></ode></friction></surface></collision>
+        <visual name="wall_l_visual"><pose>-0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="wall_r_collision"><pose>0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><surface><friction><ode><mu>0.1</mu><mu2>0.1</mu2></ode></friction></surface></collision>
+        <visual name="wall_r_visual"><pose>0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <visual name="bin_visual"><pose>0 -1.25 0.005 0 0 0</pose><geometry><box><size>0.24 0.5 0.01</size></box></geometry><material><ambient>0.1 0.6 0.1 1</ambient><diffuse>0.1 0.6 0.1 1</diffuse></material></visual>
+        <collision name="bin_l_collision"><pose>-0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry></collision>
+        <visual name="bin_l_visual"><pose>-0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="bin_r_collision"><pose>0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry></collision>
+        <visual name="bin_r_visual"><pose>0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="bin_end_collision"><pose>0 -1.5 0.05 0 0 0</pose><geometry><box><size>0.26 0.02 0.1</size></box></geometry></collision>
+        <visual name="bin_end_visual"><pose>0 -1.5 0.05 0 0 0</pose><geometry><box><size>0.26 0.02 0.1</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <sensor name="lane_special_sink" type="logical_camera">
+          <pose>0 -1.1 0.9 0 1.5707 0</pose>
+          <update_rate>10</update_rate>
+          <logical_camera><near>0.05</near><far>1.0</far>
+            <horizontal_fov>1.2</horizontal_fov><aspect_ratio>1.0</aspect_ratio></logical_camera>
+          <always_on>1</always_on>
+          <topic>apc/sim/apple_sink</topic>
+        </sensor>
+      </link>
+    </model>
+
+    <!-- 밀어내기 장치: special (+y 쪽에서 -y 로 밀어 레인으로 배출) -->
+    <model name="pusher_special">
+      <pose>-1.4 0.36 0.85 0 0 0</pose>
+      <link name="base">
+        <inertial><mass>2.0</mass></inertial>
+        <visual name="base_visual"><pose>0 0.03 0 0 0 0</pose><geometry><box><size>0.12 0.04 0.10</size></box></geometry><material><ambient>0.3 0.3 0.3 1</ambient><diffuse>0.3 0.3 0.3 1</diffuse></material></visual>
+      </link>
+      <joint name="fix" type="fixed"><parent>world</parent><child>base</child></joint>
+      <link name="paddle">
+        <pose>0 -0.03 0 0 0 0</pose>
+        <inertial>
+          <mass>0.3</mass>
+          <inertia><ixx>0.0002</ixx><iyy>0.0004</iyy><izz>0.0004</izz>
+            <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name="paddle_collision"><pose>0 0 0 0 0 0</pose><geometry><box><size>0.12 0.02 0.08</size></box></geometry><surface><friction><ode><mu>0.0</mu><mu2>0.0</mu2></ode></friction></surface></collision>
+        <visual name="paddle_visual"><pose>0 0 0 0 0 0</pose><geometry><box><size>0.12 0.02 0.08</size></box></geometry><material><ambient>0.1 0.6 0.1 1</ambient><diffuse>0.1 0.6 0.1 1</diffuse></material></visual>
+      </link>
+      <joint name="slide" type="prismatic">
+        <parent>base</parent><child>paddle</child>
+        <axis><xyz>0 -1 0</xyz>
+          <limit><lower>0</lower><upper>0.6</upper><effort>200</effort><velocity>2.0</velocity></limit>
+        </axis>
+      </joint>
+      <plugin filename="gz-sim-joint-position-controller-system"
+              name="gz::sim::systems::JointPositionController">
+        <joint_name>slide</joint_name>
+        <topic>/apc/bench/pusher_special/cmd</topic>
+        <use_velocity_commands>true</use_velocity_commands>
+        <p_gain>6</p_gain>
+        <cmd_max>1.5</cmd_max>
+        <cmd_min>-1.5</cmd_min>
+      </plugin>
+      <!-- 왕복: tick=1 → 밀기, tick=2 → 복귀 (레인마다 500ms 위상차) -->
+      <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+        <input type="gz.msgs.Int32" topic="/apc/bench/tick"><match field="data">1</match></input>
+        <output type="gz.msgs.Double" topic="/apc/bench/pusher_special/cmd">data: 0.6</output>
+        <delay_ms>0</delay_ms>
+      </plugin>
+      <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+        <input type="gz.msgs.Int32" topic="/apc/bench/tick"><match field="data">2</match></input>
+        <output type="gz.msgs.Double" topic="/apc/bench/pusher_special/cmd">data: 0.0</output>
+        <delay_ms>0</delay_ms>
+      </plugin>
+    </model>
+
+    <!-- 배출 레인: good -->
+    <model name="lane_good">
+      <static>true</static>
+      <pose>-1.15 0 0 0 0 0</pose>
+      <link name="chute">
+        <collision name="slide_collision"><pose>0 -0.635 0.565 0.5323 0 0</pose><geometry><box><size>0.2 0.847 0.02</size></box></geometry><surface><friction><ode><mu>0.1</mu><mu2>0.1</mu2></ode></friction></surface></collision>
+        <visual name="slide_visual"><pose>0 -0.635 0.565 0.5323 0 0</pose><geometry><box><size>0.2 0.847 0.02</size></box></geometry><material><ambient>0.1 0.3 0.8 1</ambient><diffuse>0.1 0.3 0.8 1</diffuse></material></visual>
+        <collision name="wall_l_collision"><pose>-0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><surface><friction><ode><mu>0.1</mu><mu2>0.1</mu2></ode></friction></surface></collision>
+        <visual name="wall_l_visual"><pose>-0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="wall_r_collision"><pose>0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><surface><friction><ode><mu>0.1</mu><mu2>0.1</mu2></ode></friction></surface></collision>
+        <visual name="wall_r_visual"><pose>0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <visual name="bin_visual"><pose>0 -1.25 0.005 0 0 0</pose><geometry><box><size>0.24 0.5 0.01</size></box></geometry><material><ambient>0.1 0.3 0.8 1</ambient><diffuse>0.1 0.3 0.8 1</diffuse></material></visual>
+        <collision name="bin_l_collision"><pose>-0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry></collision>
+        <visual name="bin_l_visual"><pose>-0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="bin_r_collision"><pose>0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry></collision>
+        <visual name="bin_r_visual"><pose>0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="bin_end_collision"><pose>0 -1.5 0.05 0 0 0</pose><geometry><box><size>0.26 0.02 0.1</size></box></geometry></collision>
+        <visual name="bin_end_visual"><pose>0 -1.5 0.05 0 0 0</pose><geometry><box><size>0.26 0.02 0.1</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <sensor name="lane_good_sink" type="logical_camera">
+          <pose>0 -1.1 0.9 0 1.5707 0</pose>
+          <update_rate>10</update_rate>
+          <logical_camera><near>0.05</near><far>1.0</far>
+            <horizontal_fov>1.2</horizontal_fov><aspect_ratio>1.0</aspect_ratio></logical_camera>
+          <always_on>1</always_on>
+          <topic>apc/sim/apple_sink</topic>
+        </sensor>
+      </link>
+    </model>
+
+    <!-- 밀어내기 장치: good (+y 쪽에서 -y 로 밀어 레인으로 배출) -->
+    <model name="pusher_good">
+      <pose>-1.15 0.36 0.85 0 0 0</pose>
+      <link name="base">
+        <inertial><mass>2.0</mass></inertial>
+        <visual name="base_visual"><pose>0 0.03 0 0 0 0</pose><geometry><box><size>0.12 0.04 0.10</size></box></geometry><material><ambient>0.3 0.3 0.3 1</ambient><diffuse>0.3 0.3 0.3 1</diffuse></material></visual>
+      </link>
+      <joint name="fix" type="fixed"><parent>world</parent><child>base</child></joint>
+      <link name="paddle">
+        <pose>0 -0.03 0 0 0 0</pose>
+        <inertial>
+          <mass>0.3</mass>
+          <inertia><ixx>0.0002</ixx><iyy>0.0004</iyy><izz>0.0004</izz>
+            <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name="paddle_collision"><pose>0 0 0 0 0 0</pose><geometry><box><size>0.12 0.02 0.08</size></box></geometry><surface><friction><ode><mu>0.0</mu><mu2>0.0</mu2></ode></friction></surface></collision>
+        <visual name="paddle_visual"><pose>0 0 0 0 0 0</pose><geometry><box><size>0.12 0.02 0.08</size></box></geometry><material><ambient>0.1 0.3 0.8 1</ambient><diffuse>0.1 0.3 0.8 1</diffuse></material></visual>
+      </link>
+      <joint name="slide" type="prismatic">
+        <parent>base</parent><child>paddle</child>
+        <axis><xyz>0 -1 0</xyz>
+          <limit><lower>0</lower><upper>0.6</upper><effort>200</effort><velocity>2.0</velocity></limit>
+        </axis>
+      </joint>
+      <plugin filename="gz-sim-joint-position-controller-system"
+              name="gz::sim::systems::JointPositionController">
+        <joint_name>slide</joint_name>
+        <topic>/apc/bench/pusher_good/cmd</topic>
+        <use_velocity_commands>true</use_velocity_commands>
+        <p_gain>6</p_gain>
+        <cmd_max>1.5</cmd_max>
+        <cmd_min>-1.5</cmd_min>
+      </plugin>
+      <!-- 왕복: tick=1 → 밀기, tick=2 → 복귀 (레인마다 500ms 위상차) -->
+      <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+        <input type="gz.msgs.Int32" topic="/apc/bench/tick"><match field="data">1</match></input>
+        <output type="gz.msgs.Double" topic="/apc/bench/pusher_good/cmd">data: 0.6</output>
+        <delay_ms>500</delay_ms>
+      </plugin>
+      <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+        <input type="gz.msgs.Int32" topic="/apc/bench/tick"><match field="data">2</match></input>
+        <output type="gz.msgs.Double" topic="/apc/bench/pusher_good/cmd">data: 0.0</output>
+        <delay_ms>500</delay_ms>
+      </plugin>
+    </model>
+
+    <!-- 배출 레인: normal -->
+    <model name="lane_normal">
+      <static>true</static>
+      <pose>-0.9 0 0 0 0 0</pose>
+      <link name="chute">
+        <collision name="slide_collision"><pose>0 -0.635 0.565 0.5323 0 0</pose><geometry><box><size>0.2 0.847 0.02</size></box></geometry><surface><friction><ode><mu>0.1</mu><mu2>0.1</mu2></ode></friction></surface></collision>
+        <visual name="slide_visual"><pose>0 -0.635 0.565 0.5323 0 0</pose><geometry><box><size>0.2 0.847 0.02</size></box></geometry><material><ambient>0.9 0.7 0.1 1</ambient><diffuse>0.9 0.7 0.1 1</diffuse></material></visual>
+        <collision name="wall_l_collision"><pose>-0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><surface><friction><ode><mu>0.1</mu><mu2>0.1</mu2></ode></friction></surface></collision>
+        <visual name="wall_l_visual"><pose>-0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="wall_r_collision"><pose>0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><surface><friction><ode><mu>0.1</mu><mu2>0.1</mu2></ode></friction></surface></collision>
+        <visual name="wall_r_visual"><pose>0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <visual name="bin_visual"><pose>0 -1.25 0.005 0 0 0</pose><geometry><box><size>0.24 0.5 0.01</size></box></geometry><material><ambient>0.9 0.7 0.1 1</ambient><diffuse>0.9 0.7 0.1 1</diffuse></material></visual>
+        <collision name="bin_l_collision"><pose>-0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry></collision>
+        <visual name="bin_l_visual"><pose>-0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="bin_r_collision"><pose>0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry></collision>
+        <visual name="bin_r_visual"><pose>0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="bin_end_collision"><pose>0 -1.5 0.05 0 0 0</pose><geometry><box><size>0.26 0.02 0.1</size></box></geometry></collision>
+        <visual name="bin_end_visual"><pose>0 -1.5 0.05 0 0 0</pose><geometry><box><size>0.26 0.02 0.1</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <sensor name="lane_normal_sink" type="logical_camera">
+          <pose>0 -1.1 0.9 0 1.5707 0</pose>
+          <update_rate>10</update_rate>
+          <logical_camera><near>0.05</near><far>1.0</far>
+            <horizontal_fov>1.2</horizontal_fov><aspect_ratio>1.0</aspect_ratio></logical_camera>
+          <always_on>1</always_on>
+          <topic>apc/sim/apple_sink</topic>
+        </sensor>
+      </link>
+    </model>
+
+    <!-- 밀어내기 장치: normal (+y 쪽에서 -y 로 밀어 레인으로 배출) -->
+    <model name="pusher_normal">
+      <pose>-0.9 0.36 0.85 0 0 0</pose>
+      <link name="base">
+        <inertial><mass>2.0</mass></inertial>
+        <visual name="base_visual"><pose>0 0.03 0 0 0 0</pose><geometry><box><size>0.12 0.04 0.10</size></box></geometry><material><ambient>0.3 0.3 0.3 1</ambient><diffuse>0.3 0.3 0.3 1</diffuse></material></visual>
+      </link>
+      <joint name="fix" type="fixed"><parent>world</parent><child>base</child></joint>
+      <link name="paddle">
+        <pose>0 -0.03 0 0 0 0</pose>
+        <inertial>
+          <mass>0.3</mass>
+          <inertia><ixx>0.0002</ixx><iyy>0.0004</iyy><izz>0.0004</izz>
+            <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name="paddle_collision"><pose>0 0 0 0 0 0</pose><geometry><box><size>0.12 0.02 0.08</size></box></geometry><surface><friction><ode><mu>0.0</mu><mu2>0.0</mu2></ode></friction></surface></collision>
+        <visual name="paddle_visual"><pose>0 0 0 0 0 0</pose><geometry><box><size>0.12 0.02 0.08</size></box></geometry><material><ambient>0.9 0.7 0.1 1</ambient><diffuse>0.9 0.7 0.1 1</diffuse></material></visual>
+      </link>
+      <joint name="slide" type="prismatic">
+        <parent>base</parent><child>paddle</child>
+        <axis><xyz>0 -1 0</xyz>
+          <limit><lower>0</lower><upper>0.6</upper><effort>200</effort><velocity>2.0</velocity></limit>
+        </axis>
+      </joint>
+      <plugin filename="gz-sim-joint-position-controller-system"
+              name="gz::sim::systems::JointPositionController">
+        <joint_name>slide</joint_name>
+        <topic>/apc/bench/pusher_normal/cmd</topic>
+        <use_velocity_commands>true</use_velocity_commands>
+        <p_gain>6</p_gain>
+        <cmd_max>1.5</cmd_max>
+        <cmd_min>-1.5</cmd_min>
+      </plugin>
+      <!-- 왕복: tick=1 → 밀기, tick=2 → 복귀 (레인마다 500ms 위상차) -->
+      <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+        <input type="gz.msgs.Int32" topic="/apc/bench/tick"><match field="data">1</match></input>
+        <output type="gz.msgs.Double" topic="/apc/bench/pusher_normal/cmd">data: 0.6</output>
+        <delay_ms>1000</delay_ms>
+      </plugin>
+      <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+        <input type="gz.msgs.Int32" topic="/apc/bench/tick"><match field="data">2</match></input>
+        <output type="gz.msgs.Double" topic="/apc/bench/pusher_normal/cmd">data: 0.0</output>
+        <delay_ms>1000</delay_ms>
+      </plugin>
+    </model>
+
+    <!-- 배출 레인: reject -->
+    <model name="lane_reject">
+      <static>true</static>
+      <pose>-0.65 0 0 0 0 0</pose>
+      <link name="chute">
+        <collision name="slide_collision"><pose>0 -0.635 0.565 0.5323 0 0</pose><geometry><box><size>0.2 0.847 0.02</size></box></geometry><surface><friction><ode><mu>0.1</mu><mu2>0.1</mu2></ode></friction></surface></collision>
+        <visual name="slide_visual"><pose>0 -0.635 0.565 0.5323 0 0</pose><geometry><box><size>0.2 0.847 0.02</size></box></geometry><material><ambient>0.7 0.1 0.1 1</ambient><diffuse>0.7 0.1 0.1 1</diffuse></material></visual>
+        <collision name="wall_l_collision"><pose>-0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><surface><friction><ode><mu>0.1</mu><mu2>0.1</mu2></ode></friction></surface></collision>
+        <visual name="wall_l_visual"><pose>-0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="wall_r_collision"><pose>0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><surface><friction><ode><mu>0.1</mu><mu2>0.1</mu2></ode></friction></surface></collision>
+        <visual name="wall_r_visual"><pose>0.11 -0.635 0.605 0.5323 0 0</pose><geometry><box><size>0.02 0.847 0.08</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <visual name="bin_visual"><pose>0 -1.25 0.005 0 0 0</pose><geometry><box><size>0.24 0.5 0.01</size></box></geometry><material><ambient>0.7 0.1 0.1 1</ambient><diffuse>0.7 0.1 0.1 1</diffuse></material></visual>
+        <collision name="bin_l_collision"><pose>-0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry></collision>
+        <visual name="bin_l_visual"><pose>-0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="bin_r_collision"><pose>0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry></collision>
+        <visual name="bin_r_visual"><pose>0.12 -1.25 0.05 0 0 0</pose><geometry><box><size>0.02 0.5 0.1</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <collision name="bin_end_collision"><pose>0 -1.5 0.05 0 0 0</pose><geometry><box><size>0.26 0.02 0.1</size></box></geometry></collision>
+        <visual name="bin_end_visual"><pose>0 -1.5 0.05 0 0 0</pose><geometry><box><size>0.26 0.02 0.1</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <sensor name="lane_reject_sink" type="logical_camera">
+          <pose>0 -1.1 0.9 0 1.5707 0</pose>
+          <update_rate>10</update_rate>
+          <logical_camera><near>0.05</near><far>1.0</far>
+            <horizontal_fov>1.2</horizontal_fov><aspect_ratio>1.0</aspect_ratio></logical_camera>
+          <always_on>1</always_on>
+          <topic>apc/sim/apple_sink</topic>
+        </sensor>
+      </link>
+    </model>
+
+    <!-- 밀어내기 장치: reject (+y 쪽에서 -y 로 밀어 레인으로 배출) -->
+    <model name="pusher_reject">
+      <pose>-0.65 0.36 0.85 0 0 0</pose>
+      <link name="base">
+        <inertial><mass>2.0</mass></inertial>
+        <visual name="base_visual"><pose>0 0.03 0 0 0 0</pose><geometry><box><size>0.12 0.04 0.10</size></box></geometry><material><ambient>0.3 0.3 0.3 1</ambient><diffuse>0.3 0.3 0.3 1</diffuse></material></visual>
+      </link>
+      <joint name="fix" type="fixed"><parent>world</parent><child>base</child></joint>
+      <link name="paddle">
+        <pose>0 -0.03 0 0 0 0</pose>
+        <inertial>
+          <mass>0.3</mass>
+          <inertia><ixx>0.0002</ixx><iyy>0.0004</iyy><izz>0.0004</izz>
+            <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name="paddle_collision"><pose>0 0 0 0 0 0</pose><geometry><box><size>0.12 0.02 0.08</size></box></geometry><surface><friction><ode><mu>0.0</mu><mu2>0.0</mu2></ode></friction></surface></collision>
+        <visual name="paddle_visual"><pose>0 0 0 0 0 0</pose><geometry><box><size>0.12 0.02 0.08</size></box></geometry><material><ambient>0.7 0.1 0.1 1</ambient><diffuse>0.7 0.1 0.1 1</diffuse></material></visual>
+      </link>
+      <joint name="slide" type="prismatic">
+        <parent>base</parent><child>paddle</child>
+        <axis><xyz>0 -1 0</xyz>
+          <limit><lower>0</lower><upper>0.6</upper><effort>200</effort><velocity>2.0</velocity></limit>
+        </axis>
+      </joint>
+      <plugin filename="gz-sim-joint-position-controller-system"
+              name="gz::sim::systems::JointPositionController">
+        <joint_name>slide</joint_name>
+        <topic>/apc/bench/pusher_reject/cmd</topic>
+        <use_velocity_commands>true</use_velocity_commands>
+        <p_gain>6</p_gain>
+        <cmd_max>1.5</cmd_max>
+        <cmd_min>-1.5</cmd_min>
+      </plugin>
+      <!-- 왕복: tick=1 → 밀기, tick=2 → 복귀 (레인마다 500ms 위상차) -->
+      <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+        <input type="gz.msgs.Int32" topic="/apc/bench/tick"><match field="data">1</match></input>
+        <output type="gz.msgs.Double" topic="/apc/bench/pusher_reject/cmd">data: 0.6</output>
+        <delay_ms>1500</delay_ms>
+      </plugin>
+      <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+        <input type="gz.msgs.Int32" topic="/apc/bench/tick"><match field="data">2</match></input>
+        <output type="gz.msgs.Double" topic="/apc/bench/pusher_reject/cmd">data: 0.0</output>
+        <delay_ms>1500</delay_ms>
+      </plugin>
+    </model>
+
+    <!-- [4레인 시험] +y 막이 벽 + 바닥 수거 카메라 (복귀 행정에 튕겨난 사과 수거) -->
+    <model name="bench_overflow">
+      <static>true</static>
+      <link name="l">
+        <collision name="wall_collision"><pose>-1.025 0.52 0.5 0 0 0</pose><geometry><box><size>1.350 0.02 1.0</size></box></geometry></collision>
+        <visual name="wall_visual"><pose>-1.025 0.52 0.5 0 0 0</pose><geometry><box><size>1.350 0.02 1.0</size></box></geometry><material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material></visual>
+        <sensor name="overflow_sink_0" type="logical_camera">
+          <pose>-1.300 0.38 0.6 0 1.5707 0</pose>
+          <update_rate>10</update_rate>
+          <logical_camera><near>0.05</near><far>0.65</far>
+            <horizontal_fov>1.2</horizontal_fov><aspect_ratio>1.0</aspect_ratio></logical_camera>
+          <always_on>1</always_on>
+          <topic>apc/sim/apple_sink</topic>
+        </sensor>
+        <sensor name="overflow_sink_1" type="logical_camera">
+          <pose>-0.750 0.38 0.6 0 1.5707 0</pose>
+          <update_rate>10</update_rate>
+          <logical_camera><near>0.05</near><far>0.65</far>
+            <horizontal_fov>1.2</horizontal_fov><aspect_ratio>1.0</aspect_ratio></logical_camera>
+          <always_on>1</always_on>
+          <topic>apc/sim/apple_sink</topic>
+        </sensor>
+      </link>
+    </model>
+  </world>
+</sdf>
