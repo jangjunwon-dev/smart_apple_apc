@@ -41,11 +41,25 @@ data/
 |---|---|---|---|---|
 | | | | | |
 
-## ⬇️ 받는 방법 (AI Hub 사과 데이터)
+## ⬇️ 받는 방법 (AI Hub 사과 데이터, WSL)
 
-Colab 노트북 [`notebooks/download_aihub_apple.ipynb`](../notebooks/download_aihub_apple.ipynb) → [Colab에서 열기](https://colab.research.google.com/github/jangjunwon-dev/smart_apple_apc/blob/main/notebooks/download_aihub_apple.ipynb)
-- AI Hub 데이터 신청 승인 + API key 필요 (노트북 첫 셀 참고)
-- PC를 거치지 않고 AI Hub → 공유 드라이브로 바로 저장
+**업로드 담당 (1명, 장준원)** — AI Hub → 내 PC → 공유 드라이브
+```bash
+# 준비: AI Hub 데이터 신청 승인 + API key 발급 (스크립트 상단 주석 참고)
+# Windows에 'Google Drive 데스크톱' 설치 → 보통 G: 드라이브로 연결됨
+# WSL에서 /mnt/g 가 안 보이면 (최초 1회, 재부팅 후 다시):
+sudo mkdir -p /mnt/g && sudo mount -t drvfs G: /mnt/g
+bash scripts/download_aihub_apple.sh --drive "/mnt/g/내 드라이브/smart_apple_apc/data/raw"
+bash scripts/download_aihub_apple.sh --train --drive "/mnt/g/내 드라이브/smart_apple_apc/data/raw"   # 학습 이미지까지
+```
+
+**나머지 팀원** — 공유 드라이브 → 내 PC (AI Hub 신청 불필요)
+```bash
+# Google Drive 데스크톱의 '공유 문서함'에 있는 폴더를 바로가기로 '내 드라이브'에 추가한 뒤
+mkdir -p ~/apc_ws/data/raw
+cp -r "/mnt/g/내 드라이브/smart_apple_apc/data/raw/aihub_qc_apple" ~/apc_ws/data/raw/
+```
+> 압축은 `~/apc_ws/data/raw/` 안(리눅스 쪽)에서 풀기 — `/mnt/g/`에서 풀면 매우 느림
 
 ## 규칙
 
