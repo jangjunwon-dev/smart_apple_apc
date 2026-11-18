@@ -9,37 +9,42 @@
 |---|---|---|
 | OS (호스트) | Windows 10 22H2+ / **Windows 11 권장** | WSLg(GUI) 필요 |
 | WSL | **WSL2** | `wsl --version`으로 확인 |
-| 리눅스 | **Ubuntu 24.04 LTS (Noble)** | 22.04, 26.04 아님 주의 |
-| ROS 2 | **Jazzy Jalisco** | 24.04용 Tier 1 LTS |
-| Gazebo | **Harmonic** | `ros-jazzy-ros-gz`로 함께 설치 |
-| Python | **3.12** (Ubuntu 24.04 기본) | 별도 설치 불필요 |
-| 내비게이션 | Nav2 (Jazzy) | |
+| 리눅스 | **Ubuntu 26.04 LTS (Resolute)** | 22.04, 24.04 아님 주의 |
+| ROS 2 | **Lyrical Luth** | 26.04용 Tier 1 LTS (2031년 5월까지 지원) |
+| Gazebo | **Jetty** (gz-sim 10) | `ros-lyrical-ros-gz`로 함께 설치 |
+| Python | **3.14** (Ubuntu 26.04 기본) | 별도 설치 불필요 |
+| numpy | **2.x** (시스템 `python3-numpy`) | `numpy<2` 설치 금지 |
+| 내비게이션 | Nav2 (Lyrical) | |
 | 편집기 | VS Code + WSL 확장 | 권장 |
 
-> **왜 Jazzy인가?** 2026년 5월에 나온 Lyrical(26.04용)도 LTS지만, 아직 일부 패키지·튜토리얼이 부족합니다. 한 학기 프로젝트에서는 자료가 가장 많은 **Ubuntu 24.04 + Jazzy + Harmonic** 조합이 가장 안전합니다.
+> **왜 Lyrical인가?** 2026년 5월에 나온 최신 LTS로 2031년까지 지원되고, Ubuntu 26.04가 공식 1순위(Tier 1) 플랫폼입니다. Nav2도 Lyrical용 바이너리가 배포되어 있습니다. (2026-11-18 팀 합의로 Jazzy에서 변경)
+>
+> ⚠️ 인터넷 튜토리얼은 아직 Jazzy·Harmonic 기준이 많습니다. 명령어의 `jazzy` → `lyrical`, Gazebo `Harmonic` → `Jetty`로 바꿔 읽으세요.
 
 ---
 
-## STEP 1. WSL2 + Ubuntu 24.04 설치 (Windows)
+## STEP 1. WSL2 + Ubuntu 26.04 설치 (Windows)
 
 **PowerShell을 관리자 권한으로** 열고:
 
 ```powershell
 wsl --update
-wsl --install -d Ubuntu-24.04
+wsl --list --online          # 목록에 Ubuntu-26.04 가 있는지 확인
+wsl --install -d Ubuntu-26.04
 ```
 
+- `wsl --install` 만 입력하거나 `Ubuntu` 를 고르면 26.04가 아닐 수 있으니 **반드시 `Ubuntu-26.04`를 명시**
 - 재부팅 후 Ubuntu 창이 뜨면 **리눅스 사용자 이름/비밀번호** 설정
 - 확인:
 
 ```powershell
 wsl -l -v
 #  NAME            STATE    VERSION
-#  Ubuntu-24.04    Running  2      ← VERSION이 2여야 함
+#  Ubuntu-26.04    Running  2      ← VERSION이 2여야 함
 ```
 
-> 이미 다른 Ubuntu(22.04 등)가 있어도 괜찮습니다. 24.04를 **추가로** 설치하고, 이 프로젝트는 24.04에서만 작업하세요.
-> 기본 배포판 지정: `wsl --set-default Ubuntu-24.04`
+> 이미 다른 Ubuntu(22.04, 24.04 등)가 있어도 괜찮습니다. 26.04를 **추가로** 설치하고, 이 프로젝트는 26.04에서만 작업하세요.
+> 기본 배포판 지정: `wsl --set-default Ubuntu-26.04`
 
 ### (권장) WSL 메모리 설정
 Gazebo는 메모리를 많이 씁니다. Windows에서 `%UserProfile%\.wslconfig` 파일을 만들고:
@@ -91,18 +96,18 @@ cd ~/apc_ws
 
 ---
 
-## STEP 4. ROS 2 Jazzy + Gazebo Harmonic + Nav2 설치
+## STEP 4. ROS 2 Lyrical + Gazebo Jetty + Nav2 설치
 
-스크립트 한 번이면 됩니다 (내용은 [scripts/setup_ros2_jazzy.sh](../scripts/setup_ros2_jazzy.sh) 참고):
+스크립트 한 번이면 됩니다 (내용은 [scripts/setup_ros2_lyrical.sh](../scripts/setup_ros2_lyrical.sh) 참고):
 
 ```bash
-bash scripts/setup_ros2_jazzy.sh
+bash scripts/setup_ros2_lyrical.sh
 ```
 
 스크립트가 하는 일:
 1. 로케일(UTF-8) 설정
 2. ROS 2 apt 저장소 등록 (`ros2-apt-source` 패키지 방식, 공식 문서 기준)
-3. `ros-jazzy-desktop`, `ros-dev-tools`, `ros-jazzy-ros-gz`(Gazebo Harmonic 포함), `ros-jazzy-navigation2`, `ros-jazzy-nav2-bringup`, `ros-jazzy-cv-bridge` 등 설치
+3. `ros-lyrical-desktop`, `ros-dev-tools`, `ros-lyrical-ros-gz`(Gazebo Jetty 포함 — 별도 Gazebo 저장소 불필요), `ros-lyrical-navigation2`, `ros-lyrical-nav2-bringup`, `ros-lyrical-cv-bridge` 등 설치
 4. `rosdep` 초기화
 5. `~/.bashrc`에 ROS 환경 + 팀 공통 환경변수 추가
 
@@ -126,7 +131,7 @@ ros2 run demo_nodes_py listener   # "I heard: [Hello World: N]" 출력되면 성
 ## STEP 5. 팀원별 ROS_DOMAIN_ID 설정
 
 같은 네트워크(학교 와이파이 등)에서 서로의 토픽이 섞이지 않도록 **각자 다른 번호**를 씁니다.
-`setup_ros2_jazzy.sh`가 물어볼 때 입력하거나, `~/.bashrc`에서 직접 수정:
+`setup_ros2_lyrical.sh`가 물어볼 때 입력하거나, `~/.bashrc`에서 직접 수정:
 
 | 파트 | ROS_DOMAIN_ID |
 |---|---|
@@ -136,7 +141,7 @@ ros2 run demo_nodes_py listener   # "I heard: [Hello World: N]" 출력되면 성
 
 ```bash
 export ROS_DOMAIN_ID=11
-export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST   # 내 PC 안에서만 통신 (Jazzy 방식)
+export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST   # 내 PC 안에서만 통신 (Jazzy 이후 방식)
 ```
 
 > 통합 테스트할 때만 같은 번호로 맞추고 `ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET`으로 바꿉니다.
@@ -145,7 +150,7 @@ export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST   # 내 PC 안에서만 통신 (J
 
 ## STEP 6. Python 가상환경 (비전 파트 필수, 나머지 권장)
 
-Ubuntu 24.04는 시스템 Python에 `pip install`을 막습니다(PEP 668). 그래서 **ROS 패키지는 그대로 보이면서** 추가 패키지만 따로 까는 가상환경을 씁니다.
+Ubuntu 26.04도 시스템 Python에 `pip install`을 막습니다(PEP 668). 그래서 **ROS 패키지는 그대로 보이면서** 추가 패키지만 따로 까는 가상환경을 씁니다.
 
 ```bash
 cd ~/apc_ws
@@ -157,10 +162,10 @@ bash scripts/setup_python_env.sh
 python3 -m venv --system-site-packages .venv   # rclpy 등 ROS 패키지 접근 유지
 touch .venv/COLCON_IGNORE                       # colcon이 venv를 패키지로 착각하지 않게
 source .venv/bin/activate
-pip install -r requirements.txt                 # ultralytics, numpy<2 등
+pip install -r requirements.txt                 # ultralytics 등 (numpy 2.x 유지)
 ```
 
-> ⚠️ **numpy는 2.x 금지.** ROS Jazzy의 `cv_bridge`가 numpy 1.26 기준으로 빌드돼 있어서 numpy 2가 깔리면 이미지 변환에서 오류가 납니다. `requirements.txt`에 `numpy<2`로 고정돼 있습니다.
+> ⚠️ **numpy 1.x 설치 금지.** Ubuntu 26.04의 시스템 numpy는 2.3이고, ROS Lyrical의 `cv_bridge`도 이에 맞춰 빌드돼 있습니다. 예전 Jazzy 자료처럼 `numpy<2`를 설치하면 오히려 이미지 변환에서 오류가 납니다. `requirements.txt`에 `numpy>=2`로 고정돼 있습니다.
 
 ---
 
@@ -168,7 +173,7 @@ pip install -r requirements.txt                 # ultralytics, numpy<2 등
 
 ```bash
 cd ~/apc_ws
-source /opt/ros/jazzy/setup.bash
+source /opt/ros/lyrical/setup.bash
 source .venv/bin/activate
 rosdep install --from-paths src --ignore-src -y     # 의존성 자동 설치
 python -m colcon build --symlink-install            # venv 파이썬으로 빌드
@@ -199,7 +204,7 @@ bash scripts/check_env.sh
    ```bash
    cd ~/apc_ws && code .
    ```
-3. 왼쪽 아래에 `WSL: Ubuntu-24.04`가 뜨면 성공
+3. 왼쪽 아래에 `WSL: Ubuntu-26.04`가 뜨면 성공
 
 ---
 
@@ -212,7 +217,8 @@ bash scripts/check_env.sh
 | `ros2: command not found` | 새 터미널을 안 열었음 → `source ~/.bashrc` |
 | `colcon build`가 매우 느림 | 저장소가 `/mnt/c/` 아래에 있음 → `~/apc_ws`로 다시 클론 |
 | `ModuleNotFoundError: ultralytics` (노드 실행 시) | venv 활성화 안 하고 빌드함 → `source .venv/bin/activate` 후 `python -m colcon build` 다시 |
-| `AttributeError: _ARRAY_API not found` | numpy 2 설치됨 → `pip install "numpy<2"` |
+| `AttributeError: _ARRAY_API not found` / numpy 관련 import 오류 | venv에 numpy 1.x가 깔림 → `pip install "numpy>=2,<3"` |
+| Gazebo 화면에서 마우스 휠 줌이 안 됨 | Ubuntu 26.04 + Jetty에서 알려진 현상 (설치 문제 아님). 오른쪽 버튼 드래그로 줌 |
 | 남의 토픽이 보임 | ROS_DOMAIN_ID 겹침 → STEP 5 확인 |
 | `rosdep update` 실패 | 학교망 차단 가능성 → 핫스팟으로 재시도 |
 | Gazebo가 너무 느림 | `.wslconfig` 메모리 늘리기, 다른 프로그램 종료, `gz sim -s`(서버만) + 필요시 GUI |

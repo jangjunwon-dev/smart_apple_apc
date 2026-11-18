@@ -3,7 +3,7 @@
 <package format="3">
   <name>apc_simulation</name>
   <version>0.1.0</version>
-  <description>Smart APC Gazebo Harmonic world and launch files</description>
+  <description>Smart APC Gazebo Jetty world and launch files</description>
   <maintainer email="team@example.com">smart_apple_apc team</maintainer>
   <license>MIT</license>
 

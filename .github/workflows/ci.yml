@@ -8,7 +8,7 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-24.04
-    container: ros:jazzy-ros-base
+    container: ros:lyrical-ros-base
     defaults:
       run:
         shell: bash
@@ -25,12 +25,12 @@ jobs:
 
       - name: 빌드
         run: |
-          source /opt/ros/jazzy/setup.bash
+          source /opt/ros/lyrical/setup.bash
           colcon build --event-handlers console_direct+
 
       - name: 테스트
         run: |
-          source /opt/ros/jazzy/setup.bash
+          source /opt/ros/lyrical/setup.bash
           source install/setup.bash
           colcon test --packages-select apc_vision apc_amr
           colcon test-result --verbose

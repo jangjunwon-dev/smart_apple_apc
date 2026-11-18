@@ -54,7 +54,8 @@
 | 날짜 | 결정 | 이유 | 결정자 |
 |---|---|---|---|
 | 2026-11-17 | 시뮬레이션: ROS 2 + Gazebo 사용 | 순수 Python 대비 실제 로봇 SW 구조에 가까움 (조언 반영) | 팀 |
-| 2026-11-18 | Ubuntu 24.04 + ROS 2 Jazzy + Gazebo Harmonic 고정 | 자료가 가장 많은 안정 LTS 조합 | 팀 |
+| 2026-11-18 | ~~Ubuntu 24.04 + ROS 2 Jazzy + Gazebo Harmonic 고정~~ → 아래로 변경 | 자료가 가장 많은 안정 LTS 조합 | 팀 |
+| 2026-11-18 | **Ubuntu 26.04 LTS + ROS 2 Lyrical + Gazebo Jetty**로 변경 | 최신 LTS(2031년까지 지원), Nav2 Lyrical 바이너리 배포 확인 | 팀(박해원 제안) |
 | 2026-11-18 | 파트 분업: 비전 / AMR / 시뮬·통합, GitHub로 통합 | 시간 부족 → 병렬 개발 | 팀 |
 | | 등급 기준값 | | |
 

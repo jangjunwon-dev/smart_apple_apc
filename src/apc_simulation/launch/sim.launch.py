@@ -1,4 +1,4 @@
-"""Gazebo Harmonic 에서 apc_world 실행 + 카메라 토픽 브리지."""
+"""Gazebo Jetty 에서 apc_world 실행 + 카메라 토픽 브리지."""
 import os
 
 from ament_index_python.packages import get_package_share_directory

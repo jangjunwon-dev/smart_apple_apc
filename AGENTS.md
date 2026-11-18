@@ -6,7 +6,7 @@
 
 ## 1. 프로젝트 한 줄 요약
 농촌 인력난 해소를 위한 **스마트 APC 사과 선별·물류 자동화 시스템**.
-카메라 영상으로 사과 등급(특/상/보통/비상품)을 판정하고, AMR이 등급별 적재 구역으로 운반하는 과정을 **ROS 2 Jazzy + Gazebo Harmonic** 시뮬레이션으로 구현하는 3인 학부 팀 프로젝트(전주대학교 인공지능학과).
+카메라 영상으로 사과 등급(특/상/보통/비상품)을 판정하고, AMR이 등급별 적재 구역으로 운반하는 과정을 **ROS 2 Lyrical + Gazebo Jetty** 시뮬레이션으로 구현하는 3인 학부 팀 프로젝트(전주대학교 인공지능학과).
 
 ## 1-1. 팀 구성
 | 파트 | 담당 | 패키지 |
@@ -16,9 +16,9 @@
 | 🅒 시뮬레이션·통합 + 저장소 관리 | 장준원 | `apc_simulation`, `apc_bringup` |
 
 ## 2. 고정된 환경 (임의로 바꾸지 말 것)
-- WSL2 **Ubuntu 24.04**, **ROS 2 Jazzy**, **Gazebo Harmonic** (`ros_gz`), Nav2, Python 3.12
-- 비전 패키지는 `.venv`(`--system-site-packages`)에 설치, **numpy < 2**, **opencv-python < 4.12**
-- 다른 ROS 배포판(Humble, Lyrical 등)이나 Gazebo Classic(`gazebo_ros`) 코드/명령을 제안하지 말 것. Gazebo는 `gz sim`, `ros_gz_sim`, `ros_gz_bridge` 만 사용.
+- WSL2 **Ubuntu 26.04 LTS**, **ROS 2 Lyrical Luth**, **Gazebo Jetty** (`ros_gz`), Nav2, Python 3.14
+- 비전 패키지는 `.venv`(`--system-site-packages`)에 설치, **numpy 2.x**(시스템 `python3-numpy`와 맞춤 — `numpy<2` 설치 금지)
+- 다른 ROS 배포판(Humble, Jazzy 등)이나 Gazebo Classic(`gazebo_ros`) 코드/명령을 제안하지 말 것. Gazebo는 `gz sim`, `ros_gz_sim`, `ros_gz_bridge` 만 사용.
 
 ## 3. 저장소 구조
 저장소 루트 = colcon 워크스페이스 루트(`~/apc_ws`).
@@ -37,7 +37,7 @@ models/             가중치(공유 드라이브) — 기록은 models/README.m
 ## 4. 빌드 / 실행 / 테스트 명령
 ```bash
 cd ~/apc_ws
-source /opt/ros/jazzy/setup.bash && source .venv/bin/activate
+source /opt/ros/lyrical/setup.bash && source .venv/bin/activate
 rosdep install --from-paths src --ignore-src -y
 python -m colcon build --symlink-install        # 반드시 python -m colcon (venv 패키지 인식)
 source install/setup.bash
