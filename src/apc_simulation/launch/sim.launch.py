@@ -2,12 +2,16 @@
 
 ros2 launch apc_simulation sim.launch.py               # 사과 스폰 포함
 ros2 launch apc_simulation sim.launch.py spawn_apples:=false
+ros2 launch apc_simulation sim.launch.py world:=apc_world_4lane_test.sdf headless:=true
+  - world: worlds/ 안의 파일 이름 또는 절대 경로 (기본 apc_world.sdf)
+  - headless: true 면 GUI 없이 서버만 실행 (센서 렌더링은 유지)
+  ※ 브리지·스포너는 world 이름 'apc_world' 기준 → 다른 월드도 <world name="apc_world"> 유지
 """
 import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
@@ -16,17 +20,25 @@ from launch_ros.actions import Node
 WORLD_NAME = 'apc_world'
 
 
-def generate_launch_description():
+def _gz_sim(context):
+    """world/headless 인자로 gz sim 실행 인자를 만든다."""
     pkg_sim = get_package_share_directory('apc_simulation')
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
-    world = os.path.join(pkg_sim, 'worlds', 'apc_world.sdf')
-    spawner_params = os.path.join(pkg_sim, 'config', 'apple_spawner.yaml')
-
-    gz = IncludeLaunchDescription(
+    world = LaunchConfiguration('world').perform(context)
+    if not os.path.isabs(world):
+        world = os.path.join(pkg_sim, 'worlds', world)
+    headless = LaunchConfiguration('headless').perform(context).lower() in ('true', '1')
+    gz_args = '-r ' + ('-s --headless-rendering ' if headless else '') + world
+    return [IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')),
-        launch_arguments={'gz_args': ['-r ', world]}.items(),
-    )
+        launch_arguments={'gz_args': gz_args}.items(),
+    )]
+
+
+def generate_launch_description():
+    pkg_sim = get_package_share_directory('apc_simulation')
+    spawner_params = os.path.join(pkg_sim, 'config', 'apple_spawner.yaml')
 
     belt_gz_topic = '/model/conveyor/link/belt/track_cmd_vel'
 
@@ -65,7 +77,11 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('spawn_apples', default_value='true',
                               description='사과 주기적 생성/삭제 노드 실행 여부'),
-        gz,
+        DeclareLaunchArgument('world', default_value='apc_world.sdf',
+                              description='worlds/ 안의 월드 파일 이름 또는 절대 경로'),
+        DeclareLaunchArgument('headless', default_value='false',
+                              description='true 면 GUI 없이 gz sim 서버만 실행'),
+        OpaqueFunction(function=_gz_sim),
         bridge,
         spawner,
     ])
