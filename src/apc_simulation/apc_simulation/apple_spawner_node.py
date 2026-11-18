@@ -2,12 +2,14 @@
 
 - belt_speed 를 /apc/conveyor/cmd_vel 로 1Hz 반복 발행 (브리지 → TrackController)
 - spawn_period 마다 /world/<world>/create 로 사과 1개 생성 (크기·색 무작위)
+- apple_model: 'sphere'(단색 구, 기본) / 'ycb'(YCB 013_apple 3D 스캔 메시, yaw 무작위)
 - 컨베이어 끝 아래 논리 카메라(/apc/sim/apple_sink)에 사과가 잡히면 /world/<world>/remove
 - belt_speed, spawn_period 는 실행 중 `ros2 param set` 으로 바로 변경 가능
 - mock:=true 면 Gazebo 서비스를 호출하지 않고 로그만 출력
 """
 from __future__ import annotations
 
+import math
 import random
 
 from rcl_interfaces.msg import SetParametersResult
@@ -19,7 +21,8 @@ from ros_gz_interfaces.msg import Entity, LogicalCameraImage
 from ros_gz_interfaces.srv import DeleteEntity, SpawnEntity
 from std_msgs.msg import Float64
 
-from apc_simulation.apple_factory import apple_sdf, names_to_remove, random_apple
+from apc_simulation.apple_factory import (
+    APPLE_MODELS, apple_sdf, names_to_remove, random_apple)
 
 APPLE_PREFIX = 'apple_'
 
@@ -41,11 +44,20 @@ class AppleSpawnerNode(Node):
         self.declare_parameter('radius_max', 0.048)
         self.declare_parameter('max_apples', 6)
         self.declare_parameter('seed', -1)                 # -1 = 무작위
+        self.declare_parameter('apple_model', 'sphere')    # sphere | ycb
+
+        self.apple_model = str(self._p('apple_model'))
+        if self.apple_model not in APPLE_MODELS:
+            msg = f'apple_model 은 {APPLE_MODELS} 중 하나여야 함 (입력: {self.apple_model!r})'
+            self.get_logger().error(msg)
+            raise ValueError(msg)
 
         self.mock = self._p('mock')
         world = self._p('world_name')
         seed = self._p('seed')
         self.rng = random.Random(None if seed < 0 else seed)
+        # yaw 전용 난수 → 크기·색 순서는 apple_model 과 상관없이 같은 seed 면 동일
+        self.yaw_rng = random.Random(None if seed < 0 else seed + 1)
 
         self.belt_pub = self.create_publisher(Float64, '/apc/conveyor/cmd_vel', 10)
         self.create_subscription(
@@ -65,7 +77,7 @@ class AppleSpawnerNode(Node):
         self.add_post_set_parameters_callback(self._apply_params)
 
         self.get_logger().info(
-            f'사과 스포너 시작 (mock={self.mock}, 속도={self._p("belt_speed")} m/s, '
+            f'사과 스포너 시작 (mock={self.mock}, 모델={self.apple_model}, 속도={self._p("belt_speed")} m/s, '
             f'주기={self._p("spawn_period")} s)')
 
     def _p(self, name: str):
@@ -106,10 +118,14 @@ class AppleSpawnerNode(Node):
             self.get_logger().warning('사과 수가 max_apples 에 도달해 생성 건너뜀')
             return
         spec = random_apple(self.rng, self._p('radius_min'), self._p('radius_max'))
+        yaw = self.yaw_rng.uniform(0.0, 2.0 * math.pi) if self.apple_model == 'ycb' else 0.0
         self.count += 1
         name = f'{APPLE_PREFIX}{self.count:04d}'
-        desc = (f'{name} 생성 (r={spec.radius:.3f} m, '
-                f'rgb={tuple(round(c, 2) for c in spec.color)})')
+        if self.apple_model == 'ycb':
+            look = f'ycb, yaw={math.degrees(yaw):.0f}°'
+        else:
+            look = f'rgb={tuple(round(c, 2) for c in spec.color)}'
+        desc = f'{name} 생성 (r={spec.radius:.3f} m, {look})'
 
         if self.mock:
             self.get_logger().info(f'[mock] {desc}')
@@ -120,7 +136,7 @@ class AppleSpawnerNode(Node):
 
         req = SpawnEntity.Request()
         req.entity_factory.name = name
-        req.entity_factory.sdf = apple_sdf(name, spec)
+        req.entity_factory.sdf = apple_sdf(name, spec, self.apple_model, yaw)
         req.entity_factory.pose.position.x = float(self._p('spawn_x'))
         req.entity_factory.pose.position.y = float(self._p('spawn_y'))
         # 구 바닥이 벨트 윗면보다 5mm 위에서 시작

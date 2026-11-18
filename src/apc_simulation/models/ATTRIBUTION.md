@@ -1,6 +1,6 @@
 # Gazebo 모델 출처 (ATTRIBUTION)
 
-`apc_world_v2_preview.sdf` 에서 쓰는 모델·텍스처입니다. 외부 모델은 모두 **Gazebo Fuel** 에서 받았고,
+`apc_world_v2_preview.sdf` 와 사과 스포너(`apple_model:=ycb`)에서 쓰는 모델·텍스처입니다. 외부 모델은 모두 **Gazebo Fuel** 에서 받았고,
 라이선스는 Fuel API(`https://fuel.gazebosim.org/1.0/<owner>/models/<name>`)의 `license_name` 으로 확인했습니다
 (확인일 2026-11-18). CC-BY 4.0 모델은 아래처럼 출처를 표기해야 합니다.
 
@@ -10,6 +10,7 @@
 | `Pallet_Rack` | Pallet_Rack (v1) | Cole Biesemeyer / OpenRobotics | CC-BY 4.0 | https://fuel.gazebosim.org/1.0/OpenRobotics/models/Pallet_Rack | 없음 |
 | `Pallet_Jack` | Pallet_Jack (v1) | Cole Biesemeyer / OpenRobotics | CC-BY 4.0 | https://fuel.gazebosim.org/1.0/OpenRobotics/models/Pallet_Jack | 없음 |
 | `Forklift` | Forklift (v1) | Cole Biesemeyer / OpenRobotics | CC-BY 4.0 | https://fuel.gazebosim.org/1.0/OpenRobotics/models/Forklift | 없음 |
+| `ycb_apple` | 013_apple (YCB Object and Model Set, google_16k) — AI Habitat 변환본 `textured.glb.orig` | 원본 3D 스캔: YCB Benchmarks (B. Calli et al., https://www.ycbbenchmarks.com/) / GLB 변환: Meta AI Habitat (`ai-habitat/ycb`) | CC-BY 4.0 (원본 `LICENSE.txt` 동봉, 확인일 2026-11-18) | https://huggingface.co/datasets/ai-habitat/ycb/tree/main/meshes/013_apple/google_16k | `scripts/prep_ycb_apple.py` 로 변환: 수평 중심 원점·수평 반지름 1·바닥 z=-1 로 정규화(축 유지, +z 위), 텍스처 4096 PNG → 1024 JPG(품질 90), GLB 재패킹. 반지름별 크기 조절(scale)·무작위 yaw 는 스포너가 적용 |
 | `apc_apple_crate` | (자체 제작) | Smart APC 팀 | 이 저장소 라이선스를 따름 | – | 단순 도형으로 직접 제작한 노란 사과 상자 |
 | `apc_preview_assets/meshes` | (자체 생성) | Smart APC 팀 | 이 저장소 라이선스를 따름 | – | `scripts/gen_preview_world.py` 가 만드는 바닥·벽·철골·저장고 OBJ |
 

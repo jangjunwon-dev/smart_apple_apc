@@ -17,3 +17,6 @@ apple_spawner:
     radius_max: 0.048
     max_apples: 6
     seed: -1               # -1 = 매번 무작위, 0 이상 = 재현 가능
+    # 사과 외형: sphere = 단색 구(기본) / ycb = YCB 013_apple 3D 스캔 메시(yaw 무작위)
+    # collision(원기둥)·크기·이동·삭제는 두 모델이 같음. launch 인자 apple_model 로도 지정 가능
+    apple_model: sphere
