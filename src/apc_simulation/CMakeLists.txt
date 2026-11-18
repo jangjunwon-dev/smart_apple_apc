@@ -21,6 +21,8 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_apple_factory test/test_apple_factory.py
     APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
   )
+  # 월드 구역 좌표 ↔ apc_amr/config/zones.yaml 일치 검사
+  ament_add_pytest_test(test_zones_consistency test/test_zones_consistency.py)
 endif()
 
 ament_package()
