@@ -1,7 +1,8 @@
 """사과 모델(SDF) 생성 로직 — ROS 의존 없음 (pytest 대상).
 
 사과는 크기(반지름)와 색(빨강~주황)을 무작위로 만들어 비전 파트가 등급 차이를 볼 수 있게 한다.
-- visual: 구(sphere) — 카메라에는 둥근 사과로 보임
+- visual: apple_model='sphere' 면 단색 구, 'ycb' 면 실제 사과 3D 스캔(YCB 013_apple) 메시
+  (models/ycb_apple, 수평 반지름 1·바닥 -1 로 정규화 → scale=r 이면 반지름 r, 바닥 -r)
 - collision: 납작한 원기둥 — 구는 벨트 위에서 굴러 속도가 줄고 옆으로 흐르므로
   바닥이 평평한 원기둥으로 벨트 속도 그대로 미끄러짐 없이 이동시킴
 """
@@ -18,6 +19,9 @@ ORANGE = (0.85, 0.40, 0.05)
 
 APPLE_DENSITY = 850.0           # kg/m^3 (사과 평균 밀도 근사)
 COLLISION_HEIGHT_RATIO = 1.6    # 원기둥 높이 = 반지름 × 비율
+
+APPLE_MODELS = ('sphere', 'ycb')
+YCB_MESH_URI = 'model://ycb_apple/meshes/ycb_apple.glb'
 
 
 @dataclass(frozen=True)
@@ -53,12 +57,36 @@ def random_apple(rng: random.Random, r_min: float = 0.035, r_max: float = 0.048)
     return AppleSpec(radius=radius, color=color)  # type: ignore[arg-type]
 
 
-def apple_sdf(name: str, spec: AppleSpec) -> str:
-    """Gazebo /world/<w>/create 에 넘길 사과 모델 SDF 문자열."""
+def _visual_sdf(spec: AppleSpec, apple_model: str, yaw: float) -> str:
+    """visual 요소. sphere 는 색 지정, ycb 는 스캔 텍스처를 쓰므로 material 없음."""
+    r = spec.radius
+    if apple_model == 'sphere':
+        rgb = ' '.join(f'{c:.3f}' for c in spec.color)
+        return f"""<visual name="visual">
+        <geometry><sphere><radius>{r:.5f}</radius></sphere></geometry>
+        <material><ambient>{rgb} 1</ambient><diffuse>{rgb} 1</diffuse></material>
+      </visual>"""
+    return f"""<visual name="visual">
+        <pose>0 0 0 0 0 {yaw:.5f}</pose>
+        <geometry>
+          <mesh><uri>{YCB_MESH_URI}</uri><scale>{r:.5f} {r:.5f} {r:.5f}</scale></mesh>
+        </geometry>
+      </visual>"""
+
+
+def apple_sdf(name: str, spec: AppleSpec, apple_model: str = 'sphere',
+              yaw: float = 0.0) -> str:
+    """Gazebo /world/<w>/create 에 넘길 사과 모델 SDF 문자열.
+
+    apple_model: 'sphere'(단색 구) 또는 'ycb'(3D 스캔 메시, yaw 로 z축 회전).
+    collision(원기둥)·inertial 은 두 모델이 같아 벨트 위 움직임·삭제 동작이 동일하다.
+    """
+    if apple_model not in APPLE_MODELS:
+        raise ValueError(f'알 수 없는 apple_model: {apple_model!r} (가능: {APPLE_MODELS})')
     r = spec.radius
     m = spec.mass
     i = 0.4 * m * r * r                 # 구의 관성 모멘트
-    rgb = ' '.join(f'{c:.3f}' for c in spec.color)
+    visual = _visual_sdf(spec, apple_model, yaw)
     return f"""<?xml version="1.0" ?>
 <sdf version="1.9">
   <model name="{name}">
@@ -76,10 +104,7 @@ def apple_sdf(name: str, spec: AppleSpec) -> str:
           <cylinder><radius>{r:.5f}</radius><length>{spec.collision_height:.5f}</length></cylinder>
         </geometry>
       </collision>
-      <visual name="visual">
-        <geometry><sphere><radius>{r:.5f}</radius></sphere></geometry>
-        <material><ambient>{rgb} 1</ambient><diffuse>{rgb} 1</diffuse></material>
-      </visual>
+      {visual}
     </link>
   </model>
 </sdf>
