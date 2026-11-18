@@ -33,13 +33,19 @@ data/
 
 | 이름 | 출처 (URL) | 라이선스/이용 조건 | 수량 | 내려받은 날짜 | 위치 |
 |---|---|---|---|---|---|
-| | | | | | `raw/` |
+| AI Hub 농산물 품질(QC) 이미지 — 사과(부사·양광) | [aihub dataSetSn=149](https://aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=realm&dataSetSn=149) | AI Hub 이용약관 (내국인 신청·승인, 재배포 금지) | 학습 이미지 6개 zip ≈24.3GB, 검증 6개 ≈3.7GB, 라벨 12개 ≈14MB | _(받은 날짜)_ | `raw/aihub_qc_apple/` |
 
 ## 🔄 가공 버전 기록
 
 | 버전 | 원본 | 처리 내용 (리사이즈, 라벨 변환, 분할 비율 등) | 스크립트 | 날짜 |
 |---|---|---|---|---|
 | | | | | |
+
+## ⬇️ 받는 방법 (AI Hub 사과 데이터)
+
+Colab 노트북 [`notebooks/download_aihub_apple.ipynb`](../notebooks/download_aihub_apple.ipynb) → [Colab에서 열기](https://colab.research.google.com/github/jangjunwon-dev/smart_apple_apc/blob/main/notebooks/download_aihub_apple.ipynb)
+- AI Hub 데이터 신청 승인 + API key 필요 (노트북 첫 셀 참고)
+- PC를 거치지 않고 AI Hub → 공유 드라이브로 바로 저장
 
 ## 규칙
 
