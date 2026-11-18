@@ -37,6 +37,7 @@ check "numpy 2.x (venv)"     "'$REPO_ROOT/.venv/bin/python' -c 'import numpy as 
 check "ultralytics (venv)"   "'$REPO_ROOT/.venv/bin/python' -c 'import ultralytics as u; print(u.__version__)'"
 check "WSLg 디스플레이"       "[[ -n \${DISPLAY:-}\${WAYLAND_DISPLAY:-} ]] && echo \${DISPLAY:-\$WAYLAND_DISPLAY}"
 check "GPU 렌더링(llvmpipe 아님)" "glxinfo -B 2>/dev/null | grep -i 'renderer string' | grep -vi llvmpipe | sed 's/.*: //'"
+check "Qt 창 방식(xcb)"         "[[ \${QT_QPA_PLATFORM:-} == xcb ]] && echo xcb"
 
 if command -v nvidia-smi >/dev/null 2>&1; then
   printf "ℹ️  %-26s %s\n" "GPU" "$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)"
