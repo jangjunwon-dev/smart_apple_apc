@@ -19,7 +19,7 @@ setup(
     maintainer_email='team@example.com',
     description='Smart APC AMR task manager node',
     license='MIT',
-    tests_require=['pytest'],
+    extras_require={'test': ['pytest']},
     entry_points={
         'console_scripts': [
             'task_manager_node = apc_amr.task_manager_node:main',
