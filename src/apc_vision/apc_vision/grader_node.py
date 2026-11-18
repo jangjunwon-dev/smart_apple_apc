@@ -2,6 +2,7 @@ import csv
 import json
 import math
 import os
+import random
 import time
 from datetime import datetime
 
@@ -31,28 +32,37 @@ class GraderNode(Node):
         default_log_dir = os.path.expanduser('~/apc_ws/logs')
 
         self.declare_parameter('mock', False)
+        self.declare_parameter('mock_period', 2.0)
+        self.declare_parameter('image_topic', '/apc/camera/image_raw')
         self.declare_parameter('model_path', default_model)
         self.declare_parameter('mm_per_pixel', 1.44)
         self.declare_parameter('conf_threshold', 0.45)
-        self.declare_parameter('roi_x_min_ratio', 0.30)
-        self.declare_parameter('roi_x_max_ratio', 0.70)
+        self.declare_parameter('roi_axis', 'y')
+        self.declare_parameter('roi_min_ratio', 0.30)
+        self.declare_parameter('roi_max_ratio', 0.70)
         self.declare_parameter('strict_grade_range', True)
         self.declare_parameter('log_dir', default_log_dir)
 
         self.mock = bool(self.get_parameter('mock').value)
+        self.mock_period = float(self.get_parameter('mock_period').value)
+        self.image_topic = str(self.get_parameter('image_topic').value)
         self.model_path = str(self.get_parameter('model_path').value)
         self.mm_per_pixel = float(self.get_parameter('mm_per_pixel').value)
         self.conf_threshold = float(self.get_parameter('conf_threshold').value)
-        self.roi_x_min_ratio = float(self.get_parameter('roi_x_min_ratio').value)
-        self.roi_x_max_ratio = float(self.get_parameter('roi_x_max_ratio').value)
+        self.roi_axis = str(self.get_parameter('roi_axis').value).lower()
+        self.roi_min_ratio = float(self.get_parameter('roi_min_ratio').value)
+        self.roi_max_ratio = float(self.get_parameter('roi_max_ratio').value)
         self.strict_grade_range = bool(self.get_parameter('strict_grade_range').value)
         self.log_dir = str(self.get_parameter('log_dir').value)
+
+        if self.roi_axis not in ('x', 'y', 'both'):
+            self.get_logger().warn(f"잘못된 roi_axis='{self.roi_axis}', 기본값 'y'로 설정합니다.")
+            self.roi_axis = 'y'
 
         os.makedirs(self.log_dir, exist_ok=True)
         self.csv_path = os.path.join(self.log_dir, 'inference_verification.csv')
         self.md_path = os.path.join(self.log_dir, 'latest_verification_summary.md')
 
-        # 모델별 검증 지표 분리 (apple_grader.pt 외 가중치 하드코딩 방지)
         self.model_filename = os.path.basename(self.model_path)
         if self.model_filename == 'apple_grader.pt':
             self.metrics_str = 'mAP50=0.681, P=0.569, R=0.781'
@@ -62,25 +72,30 @@ class GraderNode(Node):
         self.bridge = CvBridge()
         self.publisher_ = self.create_publisher(AppleGrade, '/apc/apple_grade', 10)
         self.subscription = self.create_subscription(
-            Image, '/camera/image_raw', self.image_callback, 10
+            Image, self.image_topic, self.image_callback, 10
         )
 
-        # 중복 판정 방지용 트래킹 상태 저장소
         self.graded_ids = set()
-        self.recent_events = []  # (timestamp, cx, cy)
+        self.recent_events = []
         self.total_graded_count = 0
+        self.mock_seq = 0
 
         self._init_logs()
 
-        if not self.mock:
+        if self.mock:
+            self.model = None
+            self.mock_timer = self.create_timer(self.mock_period, self.mock_timer_callback)
+            self.get_logger().info(
+                f'[MOCK] 모의 판정 모드 시작 ({self.mock_period}초 주기 발행 -> /apc/apple_grade)'
+            )
+        else:
+            self.mock_timer = None
             self.model = YOLO(self.model_path)
             self.get_logger().info(
                 f'[REAL] 모델={self.model_filename} | 검증수치({self.metrics_str}) | '
-                f'mm_per_pixel={self.mm_per_pixel} | 중앙ROI={self.roi_x_min_ratio:.2f}~{self.roi_x_max_ratio:.2f}'
+                f'토픽={self.image_topic} | mm_per_pixel={self.mm_per_pixel} | '
+                f'ROI({self.roi_axis}축 {self.roi_min_ratio:.2f}~{self.roi_max_ratio:.2f})'
             )
-        else:
-            self.model = None
-            self.get_logger().info('[MOCK] 모의 판정 모드로 시작되었습니다.')
 
     def _init_logs(self):
         if not os.path.exists(self.csv_path):
@@ -97,8 +112,9 @@ class GraderNode(Node):
             f'- **최근 업데이트:** {last_record["timestamp"]}\n'
             f'- **적용 모델:** `{self.model_filename}`\n'
             f'- **모델 검증 지표:** {self.metrics_str}\n'
+            f'- **구독 카메라 토픽:** `{self.image_topic}`\n'
             f'- **픽셀 환산 계수 (`mm_per_pixel`):** {self.mm_per_pixel}\n'
-            f'- **중앙 판정 구역 (ROI):** 가로 {int(self.roi_x_min_ratio*100)}% ~ {int(self.roi_x_max_ratio*100)}%\n'
+            f'- **중앙 판정 구역 (ROI):** {self.roi_axis}축 {int(self.roi_min_ratio*100)}% ~ {int(self.roi_max_ratio*100)}%\n'
             f'- **누적 판정 건수:** {self.total_graded_count}건\n\n'
             f'## 최근 판정 샘플\n'
             f'- **Track ID:** {last_record["track_id"]}\n'
@@ -134,14 +150,39 @@ class GraderNode(Node):
                 }, ensure_ascii=False)
         self.publisher_.publish(msg)
 
+    def mock_timer_callback(self):
+        self.mock_seq += 1
+        grade = random.choice([0, 1, 2, 3])
+        diameter_mm = round(random.uniform(68.0, 92.0), 1)
+        confidence = round(random.uniform(0.80, 0.98), 3)
+        grade_label = GRADE_LABELS.get(grade, f'class_{grade}')
+
+        self._publish_result(self.mock_seq, grade, confidence, diameter_mm)
+        self.get_logger().info(
+            f'[MOCK 발행] ID={self.mock_seq} | grade={grade}({grade_label}) | '
+            f'지름={diameter_mm}mm | conf={confidence:.2f}'
+        )
+
+    def _in_roi_and_not_clipped(self, x1, y1, x2, y2, cx, cy, w, h):
+        margin = 5.0
+        if self.roi_axis in ('x', 'both'):
+            if x1 <= margin or x2 >= (w - margin):
+                return False
+            if not (w * self.roi_min_ratio <= cx <= w * self.roi_max_ratio):
+                return False
+        if self.roi_axis in ('y', 'both'):
+            if y1 <= margin or y2 >= (h - margin):
+                return False
+            if not (h * self.roi_min_ratio <= cy <= h * self.roi_max_ratio):
+                return False
+        return True
+
     def image_callback(self, msg: Image):
         if self.mock:
             return
 
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         h, w = frame.shape[:2]
-        roi_min_x = w * self.roi_x_min_ratio
-        roi_max_x = w * self.roi_x_max_ratio
 
         t0 = time.perf_counter()
         results = self.model.track(
@@ -167,20 +208,15 @@ class GraderNode(Node):
             cy = (y1 + y2) / 2.0
             track_id = int(box.id[0].item()) if box.id is not None else -1
 
-            # 1) grade 0~3 범위 검증
             if self.strict_grade_range and not (0 <= cls_id <= 3):
                 self.get_logger().warn(
                     f'[범위초과 무시] class_id={cls_id} (conf={conf:.2f}) -> 0~3 범위 밖이므로 발행 생략'
                 )
                 continue
 
-            # 2) 화면 끝 잘림 제외 및 중앙 ROI(30%~70%) 진입 시에만 측정
-            if x1 <= 5.0 or x2 >= (w - 5.0):
-                continue
-            if not (roi_min_x <= cx <= roi_max_x):
+            if not self._in_roi_and_not_clipped(x1, y1, x2, y2, cx, cy, w, h):
                 continue
 
-            # 3) 동일 사과 중복 판정 차단 (Track ID + 시공간 근접 필터)
             if track_id != -1 and track_id in self.graded_ids:
                 continue
             if any(math.hypot(cx - px, cy - py) < 45.0 for (_, px, py) in self.recent_events):
@@ -194,7 +230,6 @@ class GraderNode(Node):
                     self.graded_ids.clear()
             self.recent_events.append((now, cx, cy))
 
-            # 4) 지름 계산 (기본 mm_per_pixel = 1.44)
             diameter_px = ((x2 - x1) + (y2 - y1)) / 2.0
             diameter_mm = round(diameter_px * self.mm_per_pixel, 2)
             grade_label = GRADE_LABELS.get(cls_id, f'class_{cls_id}')
