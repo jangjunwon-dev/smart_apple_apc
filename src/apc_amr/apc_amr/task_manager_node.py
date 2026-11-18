@@ -78,7 +78,7 @@ class TaskManagerNode(Node):
         # TODO(🅑): nav2_msgs/action/NavigateToPose 액션 클라이언트로 zone 좌표 이동
         #   - 좌표: self.get_parameter(f'zone_{zone_id}_xy').value
         #   - 결과 콜백에서 self._set_state(AmrStatus.STATE_UNLOADING)
-        self.get_logger().warn(f'Nav2 미구현 → {zone_id} 즉시 도착 처리')
+        self.get_logger().warning(f'Nav2 미구현 → {zone_id} 즉시 도착 처리')
         self._set_state(AmrStatus.STATE_UNLOADING)
 
     # ------------------------------------------------------------------

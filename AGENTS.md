@@ -61,6 +61,7 @@ ros2 launch apc_bringup apc_all.launch.py      # Gazebo 포함 전체
 
 ## 6. 코딩 규칙
 - Python: PEP 8, 최대 줄 길이 99, 타입 힌트 권장, rclpy 노드는 클래스 기반
+- 로그 경고는 `get_logger().warning(...)` 사용 — Lyrical rclpy 에는 `warn` 이 없어 노드가 죽음 (옛 예제 코드 주의)
 - 주석·로그·문서는 **한국어**, 식별자(변수·함수·토픽)는 영어 snake_case
 - ROS 의존 없는 로직(예: `apc_vision/grading.py`)은 별도 모듈로 분리하고 pytest 작성
 - 새 의존성은 `package.xml`(ROS) 또는 `requirements.txt`(pip)에 반드시 추가
