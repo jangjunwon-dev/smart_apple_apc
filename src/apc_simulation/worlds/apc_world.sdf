@@ -96,7 +96,12 @@
       </plugin>
     </model>
 
-    <!-- 선별 카메라: 컨베이어 위에서 아래를 봄 -->
+    <!-- 선별 카메라: 컨베이어 위에서 아래를 봄
+         hfov 0.3 rad, 30 Hz: 80 mm 사과가 640×480 에서 약 223 px (apple_grader.pt 는 약 200 px 이상에서 검출)
+         화면 가로 = 월드 y, 세로 = 벨트 진행 방향(x)
+         시야 반폭: 사과 중심(z 0.84) y±0.115 x±0.086 / 벨트면 y±0.121 x±0.091 / 바닥 y±0.24 x±0.18
+         이론 mm_per_pixel: 사과 중심 0.359 / 벨트면 0.378
+         ROI(세로 30~70 %) 통과 프레임 ≈ 0.8 × 0.086 / belt_speed × 30 Hz (0.3 m/s → 약 7, 실측 6.5) -->
     <model name="grading_camera">
       <static>true</static>
       <pose>-2 0 1.6 0 1.5707 0</pose>
@@ -104,12 +109,12 @@
         <visual name="visual"><geometry><box><size>0.08 0.08 0.08</size></box></geometry></visual>
         <sensor name="camera" type="camera">
           <camera>
-            <horizontal_fov>1.047</horizontal_fov>
+            <horizontal_fov>0.3</horizontal_fov>
             <image><width>640</width><height>480</height><format>R8G8B8</format></image>
             <clip><near>0.05</near><far>10</far></clip>
           </camera>
           <always_on>1</always_on>
-          <update_rate>15</update_rate>
+          <update_rate>30</update_rate>
           <visualize>true</visualize>
           <topic>apc/camera/image_raw</topic>
         </sensor>

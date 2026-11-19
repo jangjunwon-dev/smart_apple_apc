@@ -14,8 +14,9 @@ apc_world.sdf 의 내용(물리·플러그인·조명·바닥·컨베이어·카
 apc_world.sdf 를 바꾸거나 배치를 바꾼 뒤에는 이 스크립트를 다시 실행할 것 (결과 SDF·OBJ 는 손으로 고치지 말 것).
 
 배치 규칙
-  - 카메라(-2, 0, 1.6) 시야: 벨트면 y±0.46 x±0.35 / 바닥 y±0.92 x -2.69~-1.31
-    → 새 부속은 x -2.75~-1.25 (y ±0.95, 바닥까지) 에 두지 않음
+  - 카메라(-2, 0, 1.6, hfov 0.3) 시야: 벨트면 y±0.12 x±0.09 / 바닥 y±0.24 x -2.18~-1.82
+    → 새 부속은 x -2.24~-1.76 (y ±0.27, 바닥까지) 에 두지 않음
+    (기존 부속은 예전 넓은 시야(hfov 1.047) 기준 x -2.75~-1.25 밖에 배치되어 있음)
     → 바닥 구멍 x -3.0~-1.0, y -1.2~1.2 는 에폭시를 깔지 않고 기존 ground_plane 색 유지
   - 장식 visual 은 모두 그림자 없음(cast_shadows false), 조명 추가 없음
   - 선별 라인 부속은 visual 만. AMR 이 부딪힐 수 있는 다리·제어반만 바닥~0.5 m collision
@@ -68,7 +69,7 @@ RACK_LEVEL1_Z = 1.511              # Pallet_Rack 1단 빔 윗면
 FLOOR_TOP = 0.004                  # 에폭시 윗면 (zone 윗면 0.01 보다 낮게)
 FLOOR_HOLE = (-3.0, -1.0, -1.2, 1.2)   # 기존 바닥색 유지 구역 x0, x1, y0, y1
 SAFETY_W = 0.1                     # 안전선 폭
-CAM_KEEP_OUT = (-2.75, -1.25, -0.95, 0.95)  # 카메라 시야: 새 부속 금지 구역
+CAM_KEEP_OUT = (-2.24, -1.76, -0.27, 0.27)  # 카메라 시야(바닥까지 + 여유): 새 부속 금지 구역
 LEG_COLL_H = 0.5                   # 다리·제어반 collision 높이 (바닥~0.5 m)
 AISLE_MIN = 1.5
 
@@ -465,7 +466,7 @@ def add_wash_dry_cover(b: WorldBuilder) -> None:
 
 def add_grading_tunnel(b: WorldBuilder) -> None:
     b.comment('    <!-- 카메라 선별 터널: x -2.85~-1.15, visual 만, 그림자 없음.')
-    b.comment('         카메라(z=1.6) 시야: 벨트면 y±0.46 x±0.35 / 바닥 y±0.92 x -2.69~-1.31')
+    b.comment('         카메라(z=1.6, hfov 0.3) 시야: 벨트면 y±0.12 x±0.09 / 바닥 y±0.24 x -2.18~-1.82')
     b.comment('         → 지붕 z 1.75 이상, 옆판 |y|=0.55 · z≥0.85, '
               '기둥 x -2.85/-1.15 (시야 밖) -->')
     visuals = [
@@ -521,7 +522,8 @@ class LineParts:
 def add_sorting_line(b: WorldBuilder) -> tuple:
     b.comment('    <!-- 선별 라인 부속 (conveyor 모델은 그대로): 다리·프레임·가이드바·입고 롤러·'
               '등급별 배출 슈트·제어반.')
-    b.comment(f'         카메라 시야 x {CAM_KEEP_OUT[0]}~{CAM_KEEP_OUT[1]} (y ±0.95, 바닥까지) '
+    b.comment(f'         카메라 시야 x {CAM_KEEP_OUT[0]}~{CAM_KEEP_OUT[1]} '
+              f'(y ±{CAM_KEEP_OUT[3]}, 바닥까지) '
               '에는 아무것도 없음. visual 만, 그림자 없음.')
     b.comment(f'         AMR 용 collision: 롤러 다리·슈트 받침다리·제어반만 바닥~{LEG_COLL_H} m -->')
     p = LineParts()

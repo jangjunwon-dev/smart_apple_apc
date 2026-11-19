@@ -98,7 +98,12 @@
       </plugin>
     </model>
 
-    <!-- 선별 카메라: 컨베이어 위에서 아래를 봄 -->
+    <!-- 선별 카메라: 컨베이어 위에서 아래를 봄
+         hfov 0.3 rad, 30 Hz: 80 mm 사과가 640×480 에서 약 223 px (apple_grader.pt 는 약 200 px 이상에서 검출)
+         화면 가로 = 월드 y, 세로 = 벨트 진행 방향(x)
+         시야 반폭: 사과 중심(z 0.84) y±0.115 x±0.086 / 벨트면 y±0.121 x±0.091 / 바닥 y±0.24 x±0.18
+         이론 mm_per_pixel: 사과 중심 0.359 / 벨트면 0.378
+         ROI(세로 30~70 %) 통과 프레임 ≈ 0.8 × 0.086 / belt_speed × 30 Hz (0.3 m/s → 약 7, 실측 6.5) -->
     <model name="grading_camera">
       <static>true</static>
       <pose>-2 0 1.6 0 1.5707 0</pose>
@@ -106,12 +111,12 @@
         <visual name="visual"><geometry><box><size>0.08 0.08 0.08</size></box></geometry></visual>
         <sensor name="camera" type="camera">
           <camera>
-            <horizontal_fov>1.047</horizontal_fov>
+            <horizontal_fov>0.3</horizontal_fov>
             <image><width>640</width><height>480</height><format>R8G8B8</format></image>
             <clip><near>0.05</near><far>10</far></clip>
           </camera>
           <always_on>1</always_on>
-          <update_rate>15</update_rate>
+          <update_rate>30</update_rate>
           <visualize>true</visualize>
           <topic>apc/camera/image_raw</topic>
         </sensor>
@@ -236,7 +241,7 @@
         <visual name="nozzle_2"><pose>0.12 0 1.25 1.5708 0 0</pose><cast_shadows>false</cast_shadows><geometry><cylinder><radius>0.015</radius><length>0.86</length></cylinder></geometry><material><ambient>0.7 0.7 0.75 1</ambient><diffuse>0.7 0.7 0.75 1</diffuse></material></visual>
       </link></model>
     <!-- 카메라 선별 터널: x -2.85~-1.15, visual 만, 그림자 없음.
-         카메라(z=1.6) 시야: 벨트면 y±0.46 x±0.35 / 바닥 y±0.92 x -2.69~-1.31
+         카메라(z=1.6, hfov 0.3) 시야: 벨트면 y±0.12 x±0.09 / 바닥 y±0.24 x -2.18~-1.82
          → 지붕 z 1.75 이상, 옆판 |y|=0.55 · z≥0.85, 기둥 x -2.85/-1.15 (시야 밖) -->
     <model name="grading_tunnel"><static>true</static><pose>-2.0 0 0 0 0 0</pose>
       <link name="l">
@@ -250,7 +255,7 @@
         <visual name="post_3"><pose>0.85 -0.55 0.875 0 0 0</pose><cast_shadows>false</cast_shadows><geometry><box><size>0.04 0.04 1.75</size></box></geometry><material><ambient>0.55 0.58 0.62 1</ambient><diffuse>0.55 0.58 0.62 1</diffuse></material></visual>
       </link></model>
     <!-- 선별 라인 부속 (conveyor 모델은 그대로): 다리·프레임·가이드바·입고 롤러·등급별 배출 슈트·제어반.
-         카메라 시야 x -2.75~-1.25 (y ±0.95, 바닥까지) 에는 아무것도 없음. visual 만, 그림자 없음.
+         카메라 시야 x -2.24~-1.76 (y ±0.27, 바닥까지) 에는 아무것도 없음. visual 만, 그림자 없음.
          AMR 용 collision: 롤러 다리·슈트 받침다리·제어반만 바닥~0.5 m -->
     <model name="sorting_line_frame"><static>true</static><pose>0 0 0 0 0 0</pose>
       <link name="l">
