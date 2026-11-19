@@ -8,3 +8,4 @@ matplotlib>=3.8
 pyyaml>=6.0
 tqdm>=4.66
 pytest>=8.0
+lap>=0.5.12

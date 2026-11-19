@@ -56,7 +56,7 @@ class GraderNode(Node):
         self.log_dir = str(self.get_parameter('log_dir').value)
 
         if self.roi_axis not in ('x', 'y', 'both'):
-            self.get_logger().warn(f"잘못된 roi_axis='{self.roi_axis}', 기본값 'y'로 설정합니다.")
+            self.get_logger().warning(f"잘못된 roi_axis='{self.roi_axis}', 기본값 'y'로 설정합니다.")
             self.roi_axis = 'y'
 
         os.makedirs(self.log_dir, exist_ok=True)
@@ -209,7 +209,7 @@ class GraderNode(Node):
             track_id = int(box.id[0].item()) if box.id is not None else -1
 
             if self.strict_grade_range and not (0 <= cls_id <= 3):
-                self.get_logger().warn(
+                self.get_logger().warning(
                     f'[범위초과 무시] class_id={cls_id} (conf={conf:.2f}) -> 0~3 범위 밖이므로 발행 생략'
                 )
                 continue
