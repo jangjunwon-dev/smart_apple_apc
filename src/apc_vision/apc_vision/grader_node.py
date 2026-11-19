@@ -65,7 +65,7 @@ class GraderNode(Node):
 
         self.model_filename = os.path.basename(self.model_path)
         if self.model_filename == 'apple_grader.pt':
-            self.metrics_str = 'mAP50=0.681, P=0.569, R=0.781'
+            self.metrics_str = 'mAP50=0.681 / P=0.569 / R=0.781'
         else:
             self.metrics_str = f'N/A (미검증 가중치: {self.model_filename})'
 
@@ -79,6 +79,7 @@ class GraderNode(Node):
         self.recent_events = []
         self.total_graded_count = 0
         self.mock_seq = 0
+        self.fallback_apple_id = 0
 
         self._init_logs()
 
@@ -206,7 +207,14 @@ class GraderNode(Node):
             x1, y1, x2, y2 = box.xyxy[0].tolist()
             cx = (x1 + x2) / 2.0
             cy = (y1 + y2) / 2.0
-            track_id = int(box.id[0].item()) if box.id is not None else -1
+            raw_id = int(box.id[0].item()) if box.id is not None else -1
+            if raw_id > 0:
+                track_id = raw_id
+                if raw_id > self.fallback_apple_id:
+                    self.fallback_apple_id = raw_id
+            else:
+                self.fallback_apple_id += 1
+                track_id = self.fallback_apple_id
 
             if self.strict_grade_range and not (0 <= cls_id <= 3):
                 self.get_logger().warning(
