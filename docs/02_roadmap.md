@@ -43,7 +43,7 @@
 
 ### 🅒 시뮬레이션·통합 (`apc_simulation`, `apc_bringup`) — 장준원
 - [x] 월드 구체화: 컨베이어 이동, 사과 주기적 스폰
-- [x] 카메라 → `/apc/camera/image_raw` 브리지 확인 (`rqt_image_view`, 15Hz 확인)
+- [x] 카메라 → `/apc/camera/image_raw` 브리지 확인 (`rqt_image_view`, 30Hz, hfov 0.3 — 사과 약 220 px)
 - [ ] AMR 로봇 모델 월드에 추가 (+ `/cmd_vel`, `/odom`, `/scan` 브리지)
 - [x] 구역 좌표 ↔ `zones.yaml` 일치
 - [x] `apc_all.launch.py` 로 전체 실행
@@ -57,6 +57,7 @@
 | 2026-11-18 | ~~Ubuntu 24.04 + ROS 2 Jazzy + Gazebo Harmonic 고정~~ → 아래로 변경 | 자료가 가장 많은 안정 LTS 조합 | 팀 |
 | 2026-11-18 | **Ubuntu 26.04 LTS + ROS 2 Lyrical + Gazebo Jetty**로 변경 | 최신 LTS(2031년까지 지원), Nav2 Lyrical 바이너리 배포 확인 | 팀(박해원 제안) |
 | 2026-11-18 | 파트 분업: 비전 / AMR / 시뮬·통합, GitHub로 통합 | 시간 부족 → 병렬 개발 | 팀 |
+| 2026-11-19 | 선별 카메라 확대 (hfov 1.047→0.3, 15→30Hz) | apple_grader.pt 시뮬 판정 0%→100% | 장준원·조한서 합의 |
 | | 등급 기준값 | | |
 
 ## 🧱 막힌 것 / 도움 필요
