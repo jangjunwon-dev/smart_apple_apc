@@ -3,7 +3,7 @@
 - belt_speed 를 /apc/conveyor/cmd_vel 로 1Hz 반복 발행 (브리지 → TrackController)
 - spawn_period 마다 /world/<world>/create 로 사과 1개 생성 (크기·색 무작위)
   간격은 SpawnSchedule 이 sim 시간으로 계산 (/clock 받기 전에는 생성 안 함 — spawn_schedule.py 참고)
-- apple_model: 'sphere'(단색 구, 기본) / 'ycb'(YCB 013_apple 3D 스캔 메시, yaw 무작위)
+- apple_model: 'ycb'(YCB 013_apple 3D 스캔 메시, yaw 무작위, 기본) / 'sphere'(단색 구)
 - 컨베이어 끝 아래 논리 카메라(/apc/sim/apple_sink)에 사과가 잡히면 /world/<world>/remove
 - belt_speed, spawn_period 는 실행 중 `ros2 param set` 으로 바로 변경 가능
 - mock:=true 면 Gazebo 서비스를 호출하지 않고 로그만 출력
@@ -47,7 +47,7 @@ class AppleSpawnerNode(Node):
         self.declare_parameter('radius_max', 0.048)
         self.declare_parameter('max_apples', 6)
         self.declare_parameter('seed', -1)                 # -1 = 무작위
-        self.declare_parameter('apple_model', 'sphere')    # sphere | ycb
+        self.declare_parameter('apple_model', 'ycb')       # ycb | sphere
 
         self.apple_model = str(self._p('apple_model'))
         if self.apple_model not in APPLE_MODELS:

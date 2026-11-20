@@ -20,6 +20,8 @@ apple_spawner:
     radius_max: 0.048
     max_apples: 6
     seed: -1               # -1 = 매번 무작위, 0 이상 = 재현 가능
-    # 사과 외형: sphere = 단색 구(기본) / ycb = YCB 013_apple 3D 스캔 메시(yaw 무작위)
+    # 사과 외형: ycb = YCB 013_apple 3D 스캔 메시(yaw 무작위, 기본) / sphere = 단색 구
+    #   ycb 기본 이유: apple_grader.pt 가 실사진 학습이라 ycb 검출 ~100 %·지름 +7 mm, sphere 75 %·+27 mm
+    #   sphere 는 AMR·물류 흐름 시험처럼 외형이 상관없는 경우용
     # collision(원기둥)·크기·이동·삭제는 두 모델이 같음. launch 인자 apple_model 로도 지정 가능
-    apple_model: sphere
+    apple_model: ycb

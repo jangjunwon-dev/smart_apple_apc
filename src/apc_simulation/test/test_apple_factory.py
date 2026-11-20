@@ -46,7 +46,7 @@ def test_collision_bottom_matches_visual_bottom():
 
 def test_apple_sdf_parses():
     spec = AppleSpec(radius=0.04, color=(0.8, 0.1, 0.05))
-    root = ET.fromstring(apple_sdf('apple_0001', spec))
+    root = ET.fromstring(apple_sdf('apple_0001', spec, 'sphere'))
     model = root.find('model')
     assert model.get('name') == 'apple_0001'
     assert float(model.find('link/visual/geometry/sphere/radius').text) == pytest.approx(0.04)
@@ -68,9 +68,14 @@ def test_names_to_remove():
 SPEC = AppleSpec(radius=0.042, color=(0.8, 0.1, 0.05))
 
 
-def test_sphere_is_default():
-    assert apple_sdf('apple_0001', SPEC) == apple_sdf('apple_0001', SPEC, 'sphere')
-    assert apple_sdf('apple_0001', SPEC) == apple_sdf('apple_0001', SPEC, 'sphere', yaw=1.0)
+def test_ycb_is_default():
+    assert apple_sdf('apple_0001', SPEC) == apple_sdf('apple_0001', SPEC, 'ycb')
+    assert apple_sdf('apple_0001', SPEC) == apple_sdf('apple_0001', SPEC, 'ycb', yaw=0.0)
+
+
+def test_sphere_ignores_yaw():
+    assert apple_sdf('apple_0001', SPEC, 'sphere') == apple_sdf(
+        'apple_0001', SPEC, 'sphere', yaw=1.0)
 
 
 def test_ycb_visual_is_scaled_mesh_with_yaw():
