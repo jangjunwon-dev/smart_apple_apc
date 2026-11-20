@@ -4,6 +4,7 @@ import math
 import os
 import random
 import time
+from collections import defaultdict
 from datetime import datetime
 
 import cv2
@@ -40,6 +41,8 @@ class GraderNode(Node):
         self.declare_parameter('roi_axis', 'y')
         self.declare_parameter('roi_min_ratio', 0.30)
         self.declare_parameter('roi_max_ratio', 0.70)
+        self.declare_parameter('edge_margin_px', 15.0)
+        self.declare_parameter('vote_frames', 5)
         self.declare_parameter('strict_grade_range', True)
         self.declare_parameter('log_dir', default_log_dir)
 
@@ -52,6 +55,8 @@ class GraderNode(Node):
         self.roi_axis = str(self.get_parameter('roi_axis').value).lower()
         self.roi_min_ratio = float(self.get_parameter('roi_min_ratio').value)
         self.roi_max_ratio = float(self.get_parameter('roi_max_ratio').value)
+        self.edge_margin_px = float(self.get_parameter('edge_margin_px').value)
+        self.vote_frames = max(1, int(self.get_parameter('vote_frames').value))
         self.strict_grade_range = bool(self.get_parameter('strict_grade_range').value)
         self.log_dir = str(self.get_parameter('log_dir').value)
 
@@ -76,6 +81,7 @@ class GraderNode(Node):
         )
 
         self.graded_ids = set()
+        self.track_buffers = {}
         self.recent_events = []
         self.total_graded_count = 0
         self.mock_seq = 0
@@ -95,7 +101,7 @@ class GraderNode(Node):
             self.get_logger().info(
                 f'[REAL] 모델={self.model_filename} | 검증수치({self.metrics_str}) | '
                 f'토픽={self.image_topic} | mm_per_pixel={self.mm_per_pixel} | '
-                f'ROI({self.roi_axis}축 {self.roi_min_ratio:.2f}~{self.roi_max_ratio:.2f})'
+                f'ROI({self.roi_axis}축 {self.roi_min_ratio:.2f}~{self.roi_max_ratio:.2f}, vote={self.vote_frames})'
             )
 
     def _init_logs(self):
@@ -165,18 +171,97 @@ class GraderNode(Node):
         )
 
     def _in_roi_and_not_clipped(self, x1, y1, x2, y2, cx, cy, w, h):
-        margin = 5.0
+        margin = self.edge_margin_px
+        if x1 <= margin or x2 >= (w - margin) or y1 <= margin or y2 >= (h - margin):
+            return False
         if self.roi_axis in ('x', 'both'):
-            if x1 <= margin or x2 >= (w - margin):
-                return False
             if not (w * self.roi_min_ratio <= cx <= w * self.roi_max_ratio):
                 return False
         if self.roi_axis in ('y', 'both'):
-            if y1 <= margin or y2 >= (h - margin):
-                return False
             if not (h * self.roi_min_ratio <= cy <= h * self.roi_max_ratio):
                 return False
         return True
+
+    def _resolve_track_id(self, raw_id, cx, cy, now):
+        if raw_id > 0:
+            if raw_id > self.fallback_apple_id:
+                self.fallback_apple_id = raw_id
+            if raw_id in self.track_buffers or raw_id in self.graded_ids:
+                return raw_id
+
+        # ByteTrack ID가 끊겨 새 번호가 부여되더라도 직전 프레임 위치(55px 이내)면 동일 버퍼로 병합
+        for existing_id, buf in self.track_buffers.items():
+            px, py = buf['last_pos']
+            if (now - buf['last_seen']) < 0.25 and math.hypot(cx - px, cy - py) < 55.0:
+                return existing_id
+
+        if raw_id > 0:
+            return raw_id
+        self.fallback_apple_id += 1
+        return self.fallback_apple_id
+
+    def _finalize_track(self, track_id, infer_ms, now):
+        buf = self.track_buffers.pop(track_id, None)
+        if not buf or not buf['samples']:
+            return
+
+        cx, cy = buf['last_pos']
+        if track_id in self.graded_ids:
+            return
+        if any(math.hypot(cx - px, cy - py) < 45.0 for (_, px, py) in self.recent_events):
+            self.graded_ids.add(track_id)
+            return
+
+        samples = buf['samples']
+        best_conf = max(s[2] for s in samples)
+        if best_conf < self.conf_threshold:
+            return
+
+        # 1) 지름: 그림자 한쪽 축 연장을 배제하기 위해 단축(min(w, h)) 기반 샘플들의 중앙값 사용
+        diams = sorted(s[0] for s in samples)
+        mid = len(diams) // 2
+        diameter_mm = round(
+            diams[mid] if len(diams) % 2 == 1 else (diams[mid - 1] + diams[mid]) / 2.0,
+            2,
+        )
+
+        # 2) 등급: ROI 내 누적 프레임의 신뢰도 가중 투표로 단일 프레임 흔들림 제거
+        scores = defaultdict(float)
+        for _, cid, c in samples:
+            scores[cid] += c
+        cls_id = max(scores.items(), key=lambda kv: kv[1])[0]
+
+        self.graded_ids.add(track_id)
+        if len(self.graded_ids) > 500:
+            self.graded_ids.clear()
+        self.recent_events.append((now, cx, cy))
+
+        grade_label = GRADE_LABELS.get(cls_id, f'class_{cls_id}')
+        self._publish_result(track_id, cls_id, best_conf, diameter_mm)
+        self.total_graded_count += 1
+
+        ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        with open(self.csv_path, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                ts, self.model_filename, self.metrics_str, track_id,
+                cls_id, grade_label, round(best_conf, 4), diameter_mm, round(infer_ms, 2)
+            ])
+
+        self._update_summary_md({
+            'timestamp': ts,
+            'track_id': track_id,
+            'grade': cls_id,
+            'grade_label': grade_label,
+            'diameter_mm': diameter_mm,
+            'confidence': best_conf,
+            'infer_ms': infer_ms,
+        })
+
+        self.get_logger().info(
+            f'[판정완료] ID={track_id} ({len(samples)}프레임 투표) | grade={cls_id}({grade_label}) | '
+            f'지름={diameter_mm}mm | conf={best_conf:.2f} | {infer_ms:.1f}ms'
+        )
 
     def image_callback(self, msg: Image):
         if self.mock:
@@ -185,88 +270,64 @@ class GraderNode(Node):
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         h, w = frame.shape[:2]
 
+        # 경계선 부근 추론 연속성을 위해 내부 탐색 임계값은 낮추고 최종 확정 시 conf_threshold 적용
+        infer_conf = min(self.conf_threshold, 0.35)
         t0 = time.perf_counter()
         results = self.model.track(
             frame,
             persist=True,
             tracker='bytetrack.yaml',
-            conf=self.conf_threshold,
+            conf=infer_conf,
             verbose=False,
         )
         infer_ms = (time.perf_counter() - t0) * 1000.0
 
-        if not results or results[0].boxes is None:
-            return
-
         now = time.time()
         self.recent_events = [(t, px, py) for (t, px, py) in self.recent_events if now - t < 1.5]
 
-        for box in results[0].boxes:
-            cls_id = int(box.cls[0].item())
-            conf = float(box.conf[0].item())
-            x1, y1, x2, y2 = box.xyxy[0].tolist()
-            cx = (x1 + x2) / 2.0
-            cy = (y1 + y2) / 2.0
-            raw_id = int(box.id[0].item()) if box.id is not None else -1
-            if raw_id > 0:
-                track_id = raw_id
-                if raw_id > self.fallback_apple_id:
-                    self.fallback_apple_id = raw_id
-            else:
-                self.fallback_apple_id += 1
-                track_id = self.fallback_apple_id
+        if results and results[0].boxes is not None:
+            for box in results[0].boxes:
+                cls_id = int(box.cls[0].item())
+                conf = float(box.conf[0].item())
+                x1, y1, x2, y2 = box.xyxy[0].tolist()
+                cx = (x1 + x2) / 2.0
+                cy = (y1 + y2) / 2.0
+                raw_id = int(box.id[0].item()) if box.id is not None else -1
 
-            if self.strict_grade_range and not (0 <= cls_id <= 3):
-                self.get_logger().warning(
-                    f'[범위초과 무시] class_id={cls_id} (conf={conf:.2f}) -> 0~3 범위 밖이므로 발행 생략'
-                )
-                continue
+                if self.strict_grade_range and not (0 <= cls_id <= 3):
+                    continue
 
-            if not self._in_roi_and_not_clipped(x1, y1, x2, y2, cx, cy, w, h):
-                continue
+                track_id = self._resolve_track_id(raw_id, cx, cy, now)
+                if track_id in self.graded_ids:
+                    continue
 
-            if track_id != -1 and track_id in self.graded_ids:
-                continue
-            if any(math.hypot(cx - px, cy - py) < 45.0 for (_, px, py) in self.recent_events):
-                if track_id != -1:
-                    self.graded_ids.add(track_id)
-                continue
+                if self._in_roi_and_not_clipped(x1, y1, x2, y2, cx, cy, w, h):
+                    bw = max(0.0, x2 - x1)
+                    bh = max(0.0, y2 - y1)
+                    diameter_mm = min(bw, bh) * self.mm_per_pixel
 
-            if track_id != -1:
-                self.graded_ids.add(track_id)
-                if len(self.graded_ids) > 500:
-                    self.graded_ids.clear()
-            self.recent_events.append((now, cx, cy))
+                    buf = self.track_buffers.setdefault(
+                        track_id, {'samples': [], 'last_seen': now, 'last_pos': (cx, cy)}
+                    )
+                    buf['samples'].append((diameter_mm, cls_id, conf))
+                    buf['last_seen'] = now
+                    buf['last_pos'] = (cx, cy)
 
-            diameter_px = ((x2 - x1) + (y2 - y1)) / 2.0
-            diameter_mm = round(diameter_px * self.mm_per_pixel, 2)
-            grade_label = GRADE_LABELS.get(cls_id, f'class_{cls_id}')
+                    if len(buf['samples']) >= self.vote_frames:
+                        self._finalize_track(track_id, infer_ms, now)
+                elif track_id in self.track_buffers:
+                    # ROI를 벗어나는 시점에 누적된 샘플이 있으면 즉시 확정
+                    self.track_buffers[track_id]['last_seen'] = now
+                    self.track_buffers[track_id]['last_pos'] = (cx, cy)
+                    self._finalize_track(track_id, infer_ms, now)
 
-            self._publish_result(track_id, cls_id, conf, diameter_mm)
-            self.total_graded_count += 1
-
-            ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            with open(self.csv_path, 'a', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow([
-                    ts, self.model_filename, self.metrics_str, track_id,
-                    cls_id, grade_label, round(conf, 4), diameter_mm, round(infer_ms, 2)
-                ])
-
-            self._update_summary_md({
-                'timestamp': ts,
-                'track_id': track_id,
-                'grade': cls_id,
-                'grade_label': grade_label,
-                'diameter_mm': diameter_mm,
-                'confidence': conf,
-                'infer_ms': infer_ms,
-            })
-
-            self.get_logger().info(
-                f'[판정완료] ID={track_id} | grade={cls_id}({grade_label}) | '
-                f'지름={diameter_mm}mm | conf={conf:.2f} | {infer_ms:.1f}ms'
-            )
+        # 시야에서 완전히 사라진 미확정 버퍼 정리 및 확정 발행
+        stale_ids = [
+            tid for tid, buf in self.track_buffers.items()
+            if (now - buf['last_seen']) > 0.25
+        ]
+        for tid in stale_ids:
+            self._finalize_track(tid, infer_ms, now)
 
 
 def main(args=None):
