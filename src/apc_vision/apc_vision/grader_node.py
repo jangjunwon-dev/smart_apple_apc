@@ -35,7 +35,7 @@ class GraderNode(Node):
         self.declare_parameter('mock_period', 2.0)
         self.declare_parameter('image_topic', '/apc/camera/image_raw')
         self.declare_parameter('model_path', default_model)
-        self.declare_parameter('mm_per_pixel', 1.44)
+        self.declare_parameter('mm_per_pixel', 0.359)
         self.declare_parameter('conf_threshold', 0.45)
         self.declare_parameter('roi_axis', 'y')
         self.declare_parameter('roi_min_ratio', 0.30)
