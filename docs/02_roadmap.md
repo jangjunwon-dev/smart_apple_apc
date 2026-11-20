@@ -58,6 +58,7 @@
 | 2026-11-18 | **Ubuntu 26.04 LTS + ROS 2 Lyrical + Gazebo Jetty**로 변경 | 최신 LTS(2031년까지 지원), Nav2 Lyrical 바이너리 배포 확인 | 팀(박해원 제안) |
 | 2026-11-18 | 파트 분업: 비전 / AMR / 시뮬·통합, GitHub로 통합 | 시간 부족 → 병렬 개발 | 팀 |
 | 2026-11-19 | 선별 카메라 확대 (hfov 1.047→0.3, 15→30Hz) | apple_grader.pt 시뮬 판정 0%→100% | 장준원·조한서 합의 |
+| 2026-11-20 | 시뮬 사과 기본 외형 ycb (`apple_model` 기본 sphere→ycb, sphere 는 옵션) | apple_grader.pt 가 단색 구는 검출 75%·지름 +27mm, ycb 는 거의 100%·+7mm | 장준원 |
 | | 등급 기준값 | | |
 
 ## 🧱 막힌 것 / 도움 필요
