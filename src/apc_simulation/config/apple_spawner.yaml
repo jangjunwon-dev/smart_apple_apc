@@ -1,6 +1,9 @@
 # apple_spawner_node 파라미터
 # 간격 = spawn_period × belt_speed = 4.0 × 0.3 = 1.2 m
-#   > 카메라 시야 폭(높이차 0.8 m, FOV 1.047 rad → 약 0.92 m) → 화면에 사과가 한 번에 1개
+#   > 카메라 시야(벨트면 기준 진행 방향 약 0.18 m, 폭 약 0.24 m, hfov 0.3 rad) → 화면에 사과가 한 번에 1개
+# belt_speed 를 바꾸면 grader ROI 통과 프레임 수도 바뀜 (카메라 30 Hz 기준)
+#   ≈ 0.8 × 0.086 / belt_speed × 30 → 0.3 m/s 에서 약 7 (실측 6.5), 4 미만이면 검출 누락 늘어남
+# spawn_y 는 0.0 유지 권장: 화면 가로 반폭이 사과 중심 높이에서 약 0.115 m 라 |y| 0.065 넘으면 사과가 잘림
 # belt_speed, spawn_period 는 실행 중 ros2 param set 으로 변경 가능
 apple_spawner:
   ros__parameters:
