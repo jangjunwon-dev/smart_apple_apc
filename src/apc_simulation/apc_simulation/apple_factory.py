@@ -74,11 +74,11 @@ def _visual_sdf(spec: AppleSpec, apple_model: str, yaw: float) -> str:
       </visual>"""
 
 
-def apple_sdf(name: str, spec: AppleSpec, apple_model: str = 'sphere',
+def apple_sdf(name: str, spec: AppleSpec, apple_model: str = 'ycb',
               yaw: float = 0.0) -> str:
     """Gazebo /world/<w>/create 에 넘길 사과 모델 SDF 문자열.
 
-    apple_model: 'sphere'(단색 구) 또는 'ycb'(3D 스캔 메시, yaw 로 z축 회전).
+    apple_model: 'ycb'(3D 스캔 메시, yaw 로 z축 회전, 기본) 또는 'sphere'(단색 구, yaw 무시).
     collision(원기둥)·inertial 은 두 모델이 같아 벨트 위 움직임·삭제 동작이 동일하다.
     """
     if apple_model not in APPLE_MODELS:

@@ -4,10 +4,10 @@ ros2 launch apc_simulation sim.launch.py               # 사과 스폰 포함
 ros2 launch apc_simulation sim.launch.py spawn_apples:=false
 ros2 launch apc_simulation sim.launch.py world:=apc_world_4lane_test.sdf headless:=true
 ros2 launch apc_simulation sim.launch.py world:=apc_world_v2_preview.sdf   # 미리보기 월드
-ros2 launch apc_simulation sim.launch.py apple_model:=ycb   # 실제 사과 3D 스캔(YCB) 외형
+ros2 launch apc_simulation sim.launch.py apple_model:=sphere   # 단색 구 외형 (기본은 ycb)
   - world: worlds/ 안의 파일 이름 또는 절대 경로 (기본 apc_world.sdf)
   - headless: true 면 GUI 없이 서버만 실행 (센서 렌더링은 유지)
-  - apple_model: sphere(단색 구, 기본) / ycb(YCB 013_apple 메시) — 스포너 파라미터로 전달
+  - apple_model: ycb(YCB 013_apple 메시, 기본) / sphere(단색 구) — 스포너 파라미터로 전달
   - models/ 폴더를 GZ_SIM_RESOURCE_PATH 에 추가 → 월드에서 model://<모델이름> 사용 (오프라인 가능)
   ※ 브리지·스포너는 world 이름 'apc_world' 기준 → 다른 월드도 <world name="apc_world"> 유지
 """
@@ -91,8 +91,8 @@ def generate_launch_description():
                               description='worlds/ 안의 월드 파일 이름 또는 절대 경로'),
         DeclareLaunchArgument('headless', default_value='false',
                               description='true 면 GUI 없이 gz sim 서버만 실행'),
-        DeclareLaunchArgument('apple_model', default_value='sphere',
-                              description='사과 외형: sphere(단색 구) | ycb(YCB 3D 스캔 메시)'),
+        DeclareLaunchArgument('apple_model', default_value='ycb',
+                              description='사과 외형: ycb(YCB 3D 스캔 메시) | sphere(단색 구)'),
         model_path,
         OpaqueFunction(function=_gz_sim),
         bridge,

@@ -2,9 +2,9 @@
 
 ros2 launch apc_bringup apc_all.launch.py vision_mock:=false amr_mock:=true
 ros2 launch apc_bringup apc_all.launch.py world:=apc_world_v2_preview.sdf headless:=true
-ros2 launch apc_bringup apc_all.launch.py apple_model:=ycb
+ros2 launch apc_bringup apc_all.launch.py apple_model:=sphere   # 단색 구 외형 (기본은 ycb)
   - world, headless, spawn_apples, apple_model 은 apc_simulation/sim.launch.py 로 그대로 넘김
-    (기본값도 sim.launch.py 와 같음 → 인자 없이 실행하면 이전과 동작 동일)
+    (기본값도 sim.launch.py 와 같음 → 인자 없이 실행하면 sim.launch.py 단독 실행과 같은 월드·외형)
 """
 import os
 
@@ -21,7 +21,7 @@ SIM_ARGS = [
     ('world', 'apc_world.sdf', 'worlds/ 안의 월드 파일 이름 또는 절대 경로'),
     ('headless', 'false', 'true 면 GUI 없이 gz sim 서버만 실행'),
     ('spawn_apples', 'true', '사과 주기적 생성/삭제 노드 실행 여부'),
-    ('apple_model', 'sphere', '사과 외형: sphere(단색 구) | ycb(YCB 3D 스캔 메시)'),
+    ('apple_model', 'ycb', '사과 외형: ycb(YCB 3D 스캔 메시) | sphere(단색 구)'),
 ]
 
 
