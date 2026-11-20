@@ -2,6 +2,7 @@
 
 - belt_speed 를 /apc/conveyor/cmd_vel 로 1Hz 반복 발행 (브리지 → TrackController)
 - spawn_period 마다 /world/<world>/create 로 사과 1개 생성 (크기·색 무작위)
+  간격은 SpawnSchedule 이 sim 시간으로 계산 (/clock 받기 전에는 생성 안 함 — spawn_schedule.py 참고)
 - apple_model: 'sphere'(단색 구, 기본) / 'ycb'(YCB 013_apple 3D 스캔 메시, yaw 무작위)
 - 컨베이어 끝 아래 논리 카메라(/apc/sim/apple_sink)에 사과가 잡히면 /world/<world>/remove
 - belt_speed, spawn_period 는 실행 중 `ros2 param set` 으로 바로 변경 가능
@@ -23,8 +24,10 @@ from std_msgs.msg import Float64
 
 from apc_simulation.apple_factory import (
     APPLE_MODELS, apple_sdf, names_to_remove, random_apple)
+from apc_simulation.spawn_schedule import SpawnSchedule
 
 APPLE_PREFIX = 'apple_'
+SPAWN_TICK = 0.05   # s, 생성 시점 확인 주기 (실제 간격은 spawn_period)
 
 
 class AppleSpawnerNode(Node):
@@ -71,7 +74,10 @@ class AppleSpawnerNode(Node):
 
         self.create_timer(1.0, self._publish_belt_speed)
         self.create_timer(1.0, self._check_lifetime)
-        self.spawn_timer = self.create_timer(self._p('spawn_period'), self._spawn_apple)
+        # spawn_period 주기 타이머를 직접 쓰지 않음: /clock 전에 만든 타이머는 첫 실행 뒤
+        # 다음 실행이 sim 0 기준 격자에 맞춰져 사과 2개가 붙어서 생성됨 (spawn_schedule.py)
+        self.schedule = SpawnSchedule(float(self._p('spawn_period')))
+        self.create_timer(SPAWN_TICK, self._on_spawn_tick)
 
         self.add_on_set_parameters_callback(self._validate_params)
         self.add_post_set_parameters_callback(self._apply_params)
@@ -104,8 +110,7 @@ class AppleSpawnerNode(Node):
                 self._publish_belt_speed()
                 self.get_logger().info(f'벨트 속도 변경: {float(p.value):.3f} m/s')
             elif p.name == 'spawn_period':
-                self.destroy_timer(self.spawn_timer)
-                self.spawn_timer = self.create_timer(float(p.value), self._spawn_apple)
+                self.schedule.set_period(float(p.value))
                 self.get_logger().info(f'사과 생성 주기 변경: {float(p.value):.2f} s')
 
     # ---------- 벨트 ----------
@@ -113,7 +118,12 @@ class AppleSpawnerNode(Node):
         self.belt_pub.publish(Float64(data=float(self._p('belt_speed'))))
 
     # ---------- 생성 ----------
-    def _spawn_apple(self) -> None:
+    def _on_spawn_tick(self) -> None:
+        now = self._now()
+        if self.schedule.due(now):
+            self._spawn_apple(now)
+
+    def _spawn_apple(self, now: float) -> None:
         if len(self.alive) >= self._p('max_apples'):
             self.get_logger().warning('사과 수가 max_apples 에 도달해 생성 건너뜀')
             return
@@ -125,7 +135,7 @@ class AppleSpawnerNode(Node):
             look = f'ycb, yaw={math.degrees(yaw):.0f}°'
         else:
             look = f'rgb={tuple(round(c, 2) for c in spec.color)}'
-        desc = f'{name} 생성 (r={spec.radius:.3f} m, {look})'
+        desc = f'{name} 생성 (t={now:.2f} s, r={spec.radius:.3f} m, {look})'
 
         if self.mock:
             self.get_logger().info(f'[mock] {desc}')
@@ -142,7 +152,7 @@ class AppleSpawnerNode(Node):
         # 구 바닥이 벨트 윗면보다 5mm 위에서 시작
         req.entity_factory.pose.position.z = float(self._p('belt_top_z')) + spec.radius + 0.005
         req.entity_factory.relative_to = 'world'
-        self.alive[name] = self._now()
+        self.alive[name] = now
         future = self.spawn_cli.call_async(req)
         future.add_done_callback(lambda f, n=name, d=desc: self._on_spawned(f, n, d))
 

@@ -21,6 +21,10 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_apple_factory test/test_apple_factory.py
     APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
   )
+  # 사과 생성 간격 계산 (/clock 전 타이머 위상 문제 회귀 테스트)
+  ament_add_pytest_test(test_spawn_schedule test/test_spawn_schedule.py
+    APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
+  )
   # 월드 구역 좌표 ↔ apc_amr/config/zones.yaml 일치 검사
   ament_add_pytest_test(test_zones_consistency test/test_zones_consistency.py)
 endif()
