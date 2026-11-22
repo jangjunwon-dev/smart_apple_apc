@@ -5,7 +5,11 @@ ros2 launch apc_simulation sim.launch.py spawn_apples:=false
 ros2 launch apc_simulation sim.launch.py world:=apc_world_4lane_test.sdf headless:=true
 ros2 launch apc_simulation sim.launch.py world:=apc_world_v2_preview.sdf   # 미리보기 월드
 ros2 launch apc_simulation sim.launch.py apple_model:=sphere   # 단색 구 외형 (기본은 ycb)
+ros2 launch apc_simulation sim.launch.py spawn_amr:=false      # AMR 로봇 없이
+ros2 launch apc_simulation sim.launch.py amr_x:=1.0 amr_y:=-1.0 amr_yaw:=1.57   # AMR 시작 위치
   - world: worlds/ 안의 파일 이름 또는 절대 경로 (기본 apc_world.sdf)
+  - spawn_amr: AMR(TurtleBot3 Waffle, 임시) 스폰 + /cmd_vel·/odom·/scan·/tf 브리지 (launch/amr.launch.py)
+  - amr_x, amr_y, amr_yaw: AMR 시작 위치 [m, rad] (기본 1.5, 0.0, 0.0 — apc_simulation/amr_robot.py)
   - headless: true 면 GUI 없이 서버만 실행 (센서 렌더링은 유지)
   - apple_model: ycb(YCB 013_apple 메시, 기본) / sphere(단색 구) — 스포너 파라미터로 전달
   - models/ 폴더를 GZ_SIM_RESOURCE_PATH 에 추가 → 월드에서 model://<모델이름> 사용 (오프라인 가능)
@@ -21,6 +25,8 @@ from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+
+from apc_simulation import amr_robot
 
 WORLD_NAME = 'apc_world'
 
@@ -50,6 +56,16 @@ def generate_launch_description():
     # 로컬 모델(model://...) 검색 경로. gz sim 실행(OpaqueFunction)보다 먼저 와야 함
     model_path = AppendEnvironmentVariable(
         'GZ_SIM_RESOURCE_PATH', os.path.join(pkg_sim, 'models'))
+    # AMR 메시(model://turtlebot3_common/...) 경로. 서버가 시작할 때 읽으므로 spawn_amr 와 상관없이 추가
+    amr_model_path = AppendEnvironmentVariable(
+        'GZ_SIM_RESOURCE_PATH', amr_robot.amr_model_path())
+
+    amr = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(pkg_sim, 'launch', 'amr.launch.py')),
+        launch_arguments={name: LaunchConfiguration(name)
+                          for name in ('amr_x', 'amr_y', 'amr_yaw')}.items(),
+        condition=IfCondition(LaunchConfiguration('spawn_amr')),
+    )
 
     bridge = Node(
         package='ros_gz_bridge',
@@ -93,8 +109,18 @@ def generate_launch_description():
                               description='true 면 GUI 없이 gz sim 서버만 실행'),
         DeclareLaunchArgument('apple_model', default_value='ycb',
                               description='사과 외형: ycb(YCB 3D 스캔 메시) | sphere(단색 구)'),
+        DeclareLaunchArgument('spawn_amr', default_value='true',
+                              description='AMR 로봇 스폰 + 브리지 + robot_state_publisher 실행 여부'),
+        DeclareLaunchArgument('amr_x', default_value=amr_robot.DEFAULT_X,
+                              description='AMR 시작 x [m] (월드 좌표)'),
+        DeclareLaunchArgument('amr_y', default_value=amr_robot.DEFAULT_Y,
+                              description='AMR 시작 y [m] (월드 좌표)'),
+        DeclareLaunchArgument('amr_yaw', default_value=amr_robot.DEFAULT_YAW,
+                              description='AMR 시작 방향 [rad] (0 = +x, zone B 쪽)'),
         model_path,
+        amr_model_path,
         OpaqueFunction(function=_gz_sim),
         bridge,
         spawner,
+        amr,
     ])

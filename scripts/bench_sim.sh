@@ -18,6 +18,9 @@
 #
 # 결과 저장: log/bench/<시각>_<월드>_<모드>/summary.txt (log/ 는 커밋 제외 폴더)
 # 환경변수: WARMUP(기본 10초)
+#           SIM_EXTRA: sim.launch.py 에 추가로 넘길 인자 (공백 구분)
+#             예) SIM_EXTRA="spawn_amr:=false" bash scripts/bench_sim.sh apc_world.sdf 60 headless
+#                 → AMR 로봇 없이 측정 (로봇 있을 때/없을 때 RTF 비교용)
 # ※ WSL 에서는 ~/.bashrc 의 GALLIUM_DRIVER=d3d12 (GPU 렌더링) 가 적용된 터미널에서 실행할 것
 # =============================================================================
 set -uo pipefail
@@ -120,6 +123,8 @@ cleanup() {
   pkill -KILL -f "[g]z-sim-main.*$(basename "$WORLD_FILE")" 2>/dev/null
   pkill -KILL -f '[p]arameter_bridge.*apc_gz_bridge' 2>/dev/null
   pkill -KILL -f '[a]pple_spawner_node' 2>/dev/null
+  pkill -KILL -f '[p]arameter_bridge.*amr_gz_bridge' 2>/dev/null
+  pkill -KILL -f '[r]obot_state_publisher' 2>/dev/null
   if pgrep -f '[g]z-sim-main' >/dev/null; then
     echo "⚠️  gz-sim-main 이 남아 있음 — 직접 확인: pgrep -fa gz-sim-main"
   else
@@ -132,9 +137,12 @@ trap 'exit 130' INT TERM
 # ---------- 1. 실행 ----------
 HEADLESS=false
 [[ "$MODE" == "headless" ]] && HEADLESS=true
+SIM_EXTRA="${SIM_EXTRA:-}"
+read -r -a SIM_EXTRA_ARGS <<<"$SIM_EXTRA"
 echo "▶  월드: $WORLD_FILE (world=$WORLD_NAME), 모드: $MODE, 측정: ${DURATION}s, 워밍업: ${WARMUP}s"
+[[ -n "$SIM_EXTRA" ]] && echo "   추가 인자: $SIM_EXTRA"
 setsid ros2 launch apc_simulation sim.launch.py \
-  world:="$WORLD_FILE" headless:="$HEADLESS" >"$LAUNCH_LOG" 2>&1 &
+  world:="$WORLD_FILE" headless:="$HEADLESS" "${SIM_EXTRA_ARGS[@]}" >"$LAUNCH_LOG" 2>&1 &
 LAUNCH_PID=$!
 
 echo "⏳ /world/$WORLD_NAME/stats 대기..."
@@ -327,6 +335,7 @@ print(' Smart APC 시뮬레이션 성능 측정 결과')
 print('=' * 60)
 print(f' 월드        : $(basename "$WORLD_FILE") (world=$WORLD_NAME)')
 print(f' 모드        : $MODE   측정 ${DURATION}s (워밍업 ${WARMUP}s 제외)   시각 $STAMP')
+print(f' 추가 인자   : ${SIM_EXTRA:-(없음)}')
 print('-' * 60)
 print(f' RTF 평균    : {avg(rtf):.3f}')
 print(f' RTF 최소    : {min(rtf) if rtf else float("nan"):.3f}')

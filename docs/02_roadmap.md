@@ -44,7 +44,7 @@
 ### 🅒 시뮬레이션·통합 (`apc_simulation`, `apc_bringup`) — 장준원
 - [x] 월드 구체화: 컨베이어 이동, 사과 주기적 스폰
 - [x] 카메라 → `/apc/camera/image_raw` 브리지 확인 (`rqt_image_view`, 30Hz, hfov 0.3 — 사과 약 220 px)
-- [ ] AMR 로봇 모델 월드에 추가 (+ `/cmd_vel`, `/odom`, `/scan` 브리지)
+- [x] AMR 로봇 모델 월드에 추가 (+ `/cmd_vel`, `/odom`, `/scan` 브리지) — TurtleBot3 Waffle(임시), `sim.launch.py spawn_amr:=true`(기본), 시작 위치 (1.5, 0)
 - [x] 구역 좌표 ↔ `zones.yaml` 일치
 - [x] `apc_all.launch.py` 로 전체 실행
 - [ ] 시연 영상 녹화
@@ -59,10 +59,11 @@
 | 2026-11-18 | 파트 분업: 비전 / AMR / 시뮬·통합, GitHub로 통합 | 시간 부족 → 병렬 개발 | 팀 |
 | 2026-11-19 | 선별 카메라 확대 (hfov 1.047→0.3, 15→30Hz) | apple_grader.pt 시뮬 판정 0%→100% | 장준원·조한서 합의 |
 | 2026-11-20 | 시뮬 사과 기본 외형 ycb (`apple_model` 기본 sphere→ycb, sphere 는 옵션) | apple_grader.pt 가 단색 구는 검출 75%·지름 +27mm, ycb 는 거의 100%·+7mm | 장준원 |
+| 2026-11-22 | AMR 로봇 TurtleBot3 Waffle(임시, Lyrical 에 TB4 없음) | Lyrical 바이너리는 `turtlebot3_gazebo` 만 있음. 교체 시 `apc_simulation/amr_robot.py`·`config/amr_bridge.yaml` 만 수정 | 박해원 확인 필요 |
 | | 등급 기준값 | | |
 
 ## 🧱 막힌 것 / 도움 필요
 
 | 날짜 | 누가 | 내용 | 상태 |
 |---|---|---|---|
-| 2026-11-20 | 장준원 | AMR 로봇 모델 월드 추가 대기 — 🅑 박해원 답변 필요: 로봇 종류(TurtleBot4 등), 시작 위치, 맵 방식(SLAM/직접 작성) | 대기 |
+| 2026-11-20 | 장준원 | AMR 로봇 모델 월드 추가 대기 — 🅑 박해원 답변 필요: 로봇 종류(TurtleBot4 등), 시작 위치, 맵 방식(SLAM/직접 작성) | 일부 해결 (11-22): TB3 Waffle 임시 추가·시작 위치 (1.5, 0) — 로봇 종류·시작 위치 확인, 맵 방식은 대기 |
