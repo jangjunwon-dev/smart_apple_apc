@@ -18,6 +18,8 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
+from apc_simulation import amr_robot   # AMR 시작 위치 기본값은 여기 한곳에서 관리
+
 # sim.launch.py 로 넘기는 인자: (이름, 기본값, 설명) — 기본값은 sim.launch.py 와 같게 유지
 SIM_ARGS = [
     ('world', 'apc_world.sdf', 'worlds/ 안의 월드 파일 이름 또는 절대 경로'),
@@ -25,9 +27,9 @@ SIM_ARGS = [
     ('spawn_apples', 'true', '사과 주기적 생성/삭제 노드 실행 여부'),
     ('apple_model', 'ycb', '사과 외형: ycb(YCB 3D 스캔 메시) | sphere(단색 구)'),
     ('spawn_amr', 'true', 'AMR 로봇(TurtleBot3 Waffle, 임시) 스폰 + 브리지 실행 여부'),
-    ('amr_x', '1.5', 'AMR 시작 x [m] (월드 좌표)'),
-    ('amr_y', '0.0', 'AMR 시작 y [m] (월드 좌표)'),
-    ('amr_yaw', '0.0', 'AMR 시작 방향 [rad] (0 = +x, zone B 쪽)'),
+    ('amr_x', amr_robot.DEFAULT_X, 'AMR 시작 x [m] (월드 좌표)'),
+    ('amr_y', amr_robot.DEFAULT_Y, 'AMR 시작 y [m] (월드 좌표)'),
+    ('amr_yaw', amr_robot.DEFAULT_YAW, 'AMR 시작 방향 [rad] (0 = +x, zone B 쪽)'),
 ]
 
 
