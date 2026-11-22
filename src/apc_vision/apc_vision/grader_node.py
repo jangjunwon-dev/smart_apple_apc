@@ -15,6 +15,9 @@ from sensor_msgs.msg import Image
 from ultralytics import YOLO
 
 from apc_interfaces.msg import AppleGrade
+from apc_vision.grading import (
+    SIZE_GOOD_MM, SIZE_NORMAL_MM, SIZE_SPECIAL_MM, combine_grade,
+)
 
 
 GRADE_LABELS = {
@@ -45,6 +48,11 @@ class GraderNode(Node):
         self.declare_parameter('vote_frames', 5)
         self.declare_parameter('strict_grade_range', True)
         self.declare_parameter('log_dir', default_log_dir)
+        # 크기 등급 결합 (최종 등급 = YOLO 품질 등급과 지름 크기 등급 중 낮은 쪽, grading.py 참고)
+        self.declare_parameter('size_grading', True)
+        self.declare_parameter('size_special_mm', SIZE_SPECIAL_MM)
+        self.declare_parameter('size_good_mm', SIZE_GOOD_MM)
+        self.declare_parameter('size_normal_mm', SIZE_NORMAL_MM)
 
         self.mock = bool(self.get_parameter('mock').value)
         self.mock_period = float(self.get_parameter('mock_period').value)
@@ -59,6 +67,12 @@ class GraderNode(Node):
         self.vote_frames = max(1, int(self.get_parameter('vote_frames').value))
         self.strict_grade_range = bool(self.get_parameter('strict_grade_range').value)
         self.log_dir = str(self.get_parameter('log_dir').value)
+        self.size_grading = bool(self.get_parameter('size_grading').value)
+        self.size_thresholds = {
+            'special_mm': float(self.get_parameter('size_special_mm').value),
+            'good_mm': float(self.get_parameter('size_good_mm').value),
+            'normal_mm': float(self.get_parameter('size_normal_mm').value),
+        }
 
         if self.roi_axis not in ('x', 'y', 'both'):
             self.get_logger().warning(f"잘못된 roi_axis='{self.roi_axis}', 기본값 'y'로 설정합니다.")
@@ -134,6 +148,7 @@ class GraderNode(Node):
 
     def _publish_result(self, track_id, grade, confidence, diameter_mm):
         msg = AppleGrade()
+        msg.header.stamp = self.get_clock().now().to_msg()   # 판정 시각 (use_sim_time 이면 sim 시각)
         if hasattr(msg, 'get_fields_and_field_types'):
             fields = msg.get_fields_and_field_types()
             if 'grade' in fields:
@@ -229,7 +244,12 @@ class GraderNode(Node):
         scores = defaultdict(float)
         for _, cid, c in samples:
             scores[cid] += c
-        cls_id = max(scores.items(), key=lambda kv: kv[1])[0]
+        quality_id = max(scores.items(), key=lambda kv: kv[1])[0]
+        # 3) 크기 등급 결합: 품질 등급과 지름 크기 등급 중 낮은 쪽
+        if self.size_grading:
+            cls_id = combine_grade(quality_id, diameter_mm, **self.size_thresholds)
+        else:
+            cls_id = quality_id
 
         self.graded_ids.add(track_id)
         if len(self.graded_ids) > 500:
@@ -259,7 +279,8 @@ class GraderNode(Node):
         })
 
         self.get_logger().info(
-            f'[판정완료] ID={track_id} ({len(samples)}프레임 투표) | grade={cls_id}({grade_label}) | '
+            f'[판정완료] ID={track_id} ({len(samples)}프레임 투표) | grade={cls_id}({grade_label}) '
+            f'[품질 {quality_id} / 크기 {"반영" if self.size_grading else "끔"}] | '
             f'지름={diameter_mm}mm | conf={best_conf:.2f} | {infer_ms:.1f}ms'
         )
 

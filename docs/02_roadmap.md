@@ -60,7 +60,7 @@
 | 2026-11-19 | 선별 카메라 확대 (hfov 1.047→0.3, 15→30Hz) | apple_grader.pt 시뮬 판정 0%→100% | 장준원·조한서 합의 |
 | 2026-11-20 | 시뮬 사과 기본 외형 ycb (`apple_model` 기본 sphere→ycb, sphere 는 옵션) | apple_grader.pt 가 단색 구는 검출 75%·지름 +27mm, ycb 는 거의 100%·+7mm | 장준원 |
 | 2026-11-22 | AMR 로봇 TurtleBot3 Waffle(임시, Lyrical 에 TB4 없음) | Lyrical 바이너리는 `turtlebot3_gazebo` 만 있음. 교체 시 `apc_simulation/amr_robot.py`·`config/amr_bridge.yaml` 만 수정 | 박해원 확인 필요 |
-| | 등급 기준값 | | |
+| 2026-11-22 | 등급 기준값 **(초안, 확정 전)**: 최종 등급 = YOLO 품질 등급과 지름 크기 등급 중 낮은 쪽. 크기 특 ≥ 89 / 상 ≥ 83 / 보통 ≥ 76 / 비상품 < 76 mm (`grader_node` 파라미터 `size_*_mm`) | 표준규격 크기 구분(무게)을 밀도 0.82 구로 근사 환산. YOLO 클래스만 쓰면 시뮬 사과가 거의 특 → 등급별 운반 시연 불가 | 장준원 제안 — 조한서·박해원 확인 필요 |
 
 ## 🧱 막힌 것 / 도움 필요
 
