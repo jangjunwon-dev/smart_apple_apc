@@ -83,3 +83,73 @@ smart_apple_apc/              (= ~/apc_ws, colcon 워크스페이스 루트)
     ├── apc_simulation/       # 🅒 Gazebo 월드·실행 파일
     └── apc_bringup/          # 🅒 전체 실행 launch
 ```
+
+---
+
+## 📢 팀원 공지 — 지금 상태와 실행 방법 (2026-11-22 기준)
+
+> 최근 바뀐 내용을 한곳에 모았습니다. 작업 시작 전에 한 번 읽어 주세요. (작성: 🅒 장준원)
+
+### 1. 최신 코드 받기 (매번 작업 전)
+```bash
+cd ~/apc_ws && git switch main && git pull
+source /opt/ros/lyrical/setup.bash && source .venv/bin/activate
+python -m colcon build --symlink-install && source install/setup.bash
+```
+
+### 2. 실제 비전(YOLO)까지 켜고 실행하기
+```bash
+# WSL 에서 Gazebo 카메라가 GPU 로 그리도록 설정 (없으면 카메라 영상이 검게 나옴)
+export GALLIUM_DRIVER=d3d12 MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA
+
+ls ~/apc_ws/models/apple_grader.pt   # 없으면 공유 드라이브 models/ 에서 받아 이 위치에 두기
+ros2 launch apc_bringup apc_all.launch.py vision_mock:=false amr_mock:=true
+
+# 새 터미널에서 판정 결과 보기 (사과 1개당 1번 찍힘)
+ros2 topic echo /apc/apple_grade
+```
+- 종료는 `Ctrl+C`. 끝날 때 `Segmentation fault (exit 139)` 가 떠도 Gazebo 자체의 알려진 현상이라 괜찮습니다.
+
+### 3. `apc_all.launch.py` 실행 옵션
+| 인자 | 기본값 | 설명 |
+|---|---|---|
+| `vision_mock` | `true` | `false` 면 YOLO(`apple_grader.pt`)로 실제 판정 |
+| `amr_mock` | `true` | `false` 면 AMR 실제 동작 (🅑 구현 후) |
+| `world` | `apc_world.sdf` | `apc_world_v2_preview.sdf` 로 바꾸면 창고 배경이 있는 월드 |
+| `headless` | `false` | `true` 면 Gazebo 창 없이 실행 (카메라는 동작) |
+| `spawn_apples` | `true` | `false` 면 사과를 만들지 않음 |
+| `apple_model` | `ycb` | `sphere` 면 단색 구 (AMR·물류만 볼 때 가벼움) |
+
+### 4. 월드 2개 — 평소엔 기본, 시연은 배경 월드
+| 월드 | 모습 | 실시간 비율(RTF, YOLO 켬) | 용도 |
+|---|---|---|---|
+| `apc_world.sdf` (기본) | 회색 바닥 + 컨베이어 + 색 구역 | 약 90~95% | 평소 개발·테스트 |
+| `apc_world_v2_preview.sdf` | 창고 건물·세척 터널·저온저장고·팔레트 | 약 70~80% | 시연 영상·발표 캡처 |
+
+- 두 월드는 컨베이어·카메라·구역(zone) 좌표가 완전히 같습니다. 배경 월드는 `scripts/gen_preview_world.py` 가 기본 월드에서 자동으로 만듭니다 (직접 수정 금지).
+- 배경 월드에는 AMR 이 부딪힐 수 있는 장애물(다리·제어반)이 있으니, Nav2 맵은 배경 월드 기준으로 만들면 두 월드 모두에서 쓸 수 있습니다.
+
+### 5. 최근 바뀐 것
+| PR | 내용 | 영향 |
+|---|---|---|
+| #20 | 선별 카메라 확대 (시야 0.3 rad, 30Hz) | 시뮬 사과 판정 0% → 100% |
+| #22 | 비전: 지름 = 짧은 축 중앙값, 여러 프레임 신뢰도 투표 | 판정 안정화 |
+| #23 | 사과 기본 외형 `ycb`(실제 사과 3D 스캔), 시작 직후 사과 2개 붙어 나오던 버그 수정 | 검출 75% → 거의 100%, 사과 간격 정확히 4초 |
+
+### 6. 지금 정해야 할 것 (1단계 마감 11/24)
+- **등급 기준값** — 초안: 최종 등급 = (YOLO 품질 등급, 지름 크기 등급) 중 더 낮은 쪽.
+  지름은 표준규격 무게 구분을 사과를 구로 보고 근사 환산 → 특 ≥ 89mm / 상 83~89mm / 보통 76~83mm / 비상품 < 76mm.
+  지금 코드는 YOLO 클래스만 쓰고 `grading.py` 는 쓰이지 않음. 확정되면 `docs/02_roadmap.md` 결정 사항에 기록.
+- **인터페이스 최종 합의** — `AppleGrade`, `AmrStatus` 를 3명이 확인.
+- **3명 환경 점검** — `bash scripts/check_env.sh` 결과를 단톡에 공유.
+
+### 7. AMR 로봇 (진행 중)
+- Lyrical 에는 **TurtleBot4 패키지가 없음**. **TurtleBot3**(`ros-lyrical-turtlebot3-gazebo`), **slam_toolbox**, **Nav2 1.5.2** 는 설치 가능 확인.
+- 그래서 🅒 가 **TurtleBot3 Waffle 을 임시 기본 로봇**으로 월드에 넣는 작업을 시작합니다 (`/cmd_vel`, `/odom`, `/scan` 브리지, 시작 위치는 launch 인자).
+  다른 로봇을 원하면 🅑 박해원 님이 알려 주세요.
+- 로봇이 들어가면 미리 설치해 두기: `sudo apt install -y ros-lyrical-turtlebot3-gazebo`
+
+### 8. 파트별 부탁
+- 🅐 조한서: 로드맵 🅐 체크박스 중 끝난 것 체크 / `/apc/apple_grade` 의 `header.stamp` 가 0 이라 판정 시각 넣기
+- 🅑 박해원: GitHub 저장소 초대 수락 확인 / `check_env.sh` 결과 공유 / 로봇 종류·시작 위치·맵 방식(SLAM 또는 월드 기준 직접 작성) 의견
+- 🅒 장준원: TurtleBot3 월드 추가 → Nav2 용 브리지 확인 → 시연 영상
