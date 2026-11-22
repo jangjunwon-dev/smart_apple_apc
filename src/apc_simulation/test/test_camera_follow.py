@@ -33,3 +33,39 @@ def test_old_follow_service():
 
 def test_no_gui():
     assert follow_command(['/world/apc_world/create'], ['/clock'], 'amr_1', True) is None
+
+
+SAMPLE_POSE = """header {
+  stamp {
+    sec: 12
+  }
+}
+position {
+  x: -1.5
+  y: 2
+  z: 1.2
+}
+orientation {
+  z: 0.38
+  w: 0.92
+}
+"""
+
+
+def test_parse_pose_with_omitted_zeros():
+    from apc_simulation.camera_follow import parse_pose
+    assert parse_pose(SAMPLE_POSE) == ((-1.5, 2.0, 1.2), (0.0, 0.0, 0.38, 0.92))
+
+
+def test_parse_pose_bad():
+    from apc_simulation.camera_follow import parse_pose
+    assert parse_pose('') is None
+    assert parse_pose('position {\n  x: 1\n}\n') is None        # orientation 없음
+
+
+def test_move_to_pose_command():
+    from apc_simulation.camera_follow import move_to_pose_command
+    cmd = move_to_pose_command(((1.0, 2.0, 3.0), (0.0, 0.0, 0.0, 1.0)))
+    assert cmd[:4] == ['gz', 'service', '-s', '/gui/move_to/pose']
+    req = cmd[cmd.index('--req') + 1]
+    assert 'position: {x: 1.0, y: 2.0, z: 3.0}' in req and 'w: 1.0' in req

@@ -46,3 +46,52 @@ def follow_command(services: list[str], topics: list[str], target: str, follow: 
 def parse_list(output: str) -> list[str]:
     """`gz service -l` / `gz topic -l` 출력 → 이름 목록."""
     return [line.strip() for line in output.splitlines() if line.strip().startswith('/')]
+
+
+# ---------------------------------------------------------------------------
+# 따라가기 끄기: Jetty GUI 는 /gui/track 에 'track_mode: NONE' 을 보내도 계속 따라감.
+# /gui/move_to/pose 로 시점을 옮기면 따라가기가 풀리므로, 현재 시점(/gui/camera/pose)
+# 그대로 옮겨서 화면이 튀지 않게 끈다. 현재 시점을 못 읽으면 컨베이어가 보이는 기본 시점.
+# ---------------------------------------------------------------------------
+CAMERA_POSE_TOPIC = '/gui/camera/pose'
+MOVE_TO_POSE_SERVICE = '/gui/move_to/pose'
+OVERVIEW_POSE = ((-2.0, -6.0, 4.0), (0.27, 0.27, 0.65, 0.65))
+
+Pose = tuple[tuple[float, float, float], tuple[float, float, float, float]]
+
+
+def _block_values(text: str, block: str, keys: str) -> tuple[float, ...] | None:
+    start = text.find(block + ' {')
+    if start < 0:
+        return None
+    end = text.find('}', start)
+    if end < 0:
+        return None
+    values = dict.fromkeys(keys, 0.0)          # proto3 는 0 인 필드를 출력하지 않음
+    for line in text[start:end].splitlines()[1:]:
+        name, _, val = line.strip().partition(':')
+        if name in values:
+            try:
+                values[name] = float(val)
+            except ValueError:
+                return None
+    return tuple(values[k] for k in keys)
+
+
+def parse_pose(text: str) -> Pose | None:
+    """`gz topic -e -t /gui/camera/pose -n 1` 출력(gz.msgs.Pose 텍스트) → (위치, 쿼터니언)."""
+    pos = _block_values(text, 'position', 'xyz')
+    quat = _block_values(text, 'orientation', 'xyzw')
+    if pos is None or quat is None or not any(quat):
+        return None
+    return pos, quat  # type: ignore[return-value]
+
+
+def move_to_pose_command(pose: Pose) -> list[str]:
+    """시점을 pose 로 옮기는 gz 명령 (따라가기도 함께 풀림)."""
+    (x, y, z), (qx, qy, qz, qw) = pose
+    req = (f'pose: {{position: {{x: {x}, y: {y}, z: {z}}}, '
+           f'orientation: {{x: {qx}, y: {qy}, z: {qz}, w: {qw}}}}}')
+    return ['gz', 'service', '-s', MOVE_TO_POSE_SERVICE,
+            '--reqtype', 'gz.msgs.GUICamera', '--reptype', 'gz.msgs.Boolean',
+            '--timeout', '2000', '--req', req]

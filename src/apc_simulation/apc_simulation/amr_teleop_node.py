@@ -16,6 +16,7 @@
 """
 import os
 import select
+import signal
 import subprocess
 import sys
 import termios
@@ -28,7 +29,10 @@ import rclpy
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 
-from apc_simulation.camera_follow import follow_command, parse_list
+from apc_simulation.camera_follow import (
+    CAMERA_POSE_TOPIC, OVERVIEW_POSE, follow_command, move_to_pose_command, parse_list,
+    parse_pose,
+)
 from apc_simulation.teleop_keys import FOLLOW_KEYS, QUIT_KEYS, TeleopState, parse_keys
 
 HELP = """
@@ -83,6 +87,7 @@ class AmrTeleopNode(Node):
         if not self.follow_busy.acquire(blocking=False):
             return                    # 이전 요청 처리 중
         want = not self.following
+        self.get_logger().info('시점 따라가기 ' + ('켜는 중...' if want else '끄는 중...'))
         threading.Thread(target=self._follow_worker, args=(want,), daemon=True).start()
 
     def _follow_worker(self, want: bool) -> None:
@@ -97,6 +102,13 @@ class AmrTeleopNode(Node):
                 return
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             out = (res.stdout + res.stderr).strip()
+            if res.returncode == 0 and not want:
+                # Jetty 는 끄기 신호만으로 안 풀림 → 현재 시점 그대로 move_to 해서 풀기
+                pose = parse_pose(_gz_output(
+                    ['gz', 'topic', '-e', '-t', CAMERA_POSE_TOPIC, '-n', '1'])) or OVERVIEW_POSE
+                res = subprocess.run(move_to_pose_command(pose), capture_output=True,
+                                     text=True, timeout=5)
+                out = (res.stdout + res.stderr).strip()
             if res.returncode == 0 and 'false' not in out.lower():
                 self.following = want
                 self.get_logger().info(
@@ -153,6 +165,8 @@ def main(args=None) -> None:
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
+        # Ctrl+C 는 터미널과 `ros2 run` 이 한 번씩 보내서 두 번 들어옴 → 정리 중엔 무시
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
         termios.tcsetattr(fd, termios.TCSADRAIN, saved)   # 터미널 원래대로
         try:
             for _ in range(3):    # 끝날 때 확실히 정지
