@@ -16,23 +16,48 @@
        │                                           ▼
  ┌─────┴──────────┐   /apc/amr_status    ┌──────────────────────┐
  │  Nav2 (AMR)    │ ◀─────────────────── │  🅑 apc_amr           │
- │  TurtleBot4 등 │   AmrStatus          │  task_manager_node   │
+ │  TB3 Waffle    │   AmrStatus          │  task_manager_node   │
  └────────────────┘ ──────────────────▶  │  (등급→구역 배정·운반) │
                                           └──────────────────────┘
                🅒 apc_simulation / apc_bringup : 월드·launch·통합
 ```
+> AMR 로봇은 **TurtleBot3 Waffle(임시)** — Lyrical 에 TurtleBot4 패키지가 없음 (#26, 🅑 확인 필요).
 
 ## 2. 토픽 규약
 
 | 토픽 | 타입 | 발행 | 구독 | 주기 |
 |---|---|---|---|---|
-| `/apc/camera/image_raw` | `sensor_msgs/Image` | Gazebo 카메라 (🅒) | 🅐 | 10~30 Hz |
+| `/apc/camera/image_raw` | `sensor_msgs/Image` | Gazebo 카메라 (🅒) | 🅐 | 30 Hz |
 | `/apc/apple_grade` | `apc_interfaces/AppleGrade` | 🅐 | 🅑 | 사과 1개당 1회 |
 | `/apc/amr_status` | `apc_interfaces/AmrStatus` | 🅑 | 🅒(모니터링) | 1 Hz + 상태 변화 시 |
 | `/navigate_to_pose` (action) | `nav2_msgs/NavigateToPose` | 🅑 | Nav2 | 작업당 1회 |
 
 - 모든 프로젝트 토픽은 **`/apc/` 접두어**를 씁니다.
-- 좌표계: `map` (전역), `base_link` (로봇) — REP-105 준수.
+
+### 2-1. AMR 로봇 토픽 (ROS 표준 이름, Gazebo ↔ Nav2)
+Nav2·`robot_state_publisher` 가 표준 이름을 기대하므로 `/apc/` 접두어를 붙이지 않습니다.
+🅒 가 `apc_simulation/config/amr_bridge.yaml` 로 Gazebo 와 연결합니다.
+
+| 토픽 | 타입 | 발행 | 구독 | 주기 |
+|---|---|---|---|---|
+| `/cmd_vel` | `geometry_msgs/TwistStamped` | Nav2 (🅑), 키보드 조종 `amr_teleop` (🅒) | Gazebo DiffDrive | 명령 시 |
+| `/odom` | `nav_msgs/Odometry` | Gazebo DiffDrive | Nav2 | 30 Hz |
+| `/scan` | `sensor_msgs/LaserScan` | Gazebo 라이다 (`base_scan`, 360개, 0.12~3.5 m) | Nav2 | 10 Hz |
+| `/tf`, `/tf_static` | `tf2_msgs/TFMessage` | Gazebo (`odom→base_footprint`), `robot_state_publisher` | Nav2 | — |
+| `/joint_states` | `sensor_msgs/JointState` | Gazebo | `robot_state_publisher` | — |
+| `/clock` | `rosgraph_msgs/Clock` | Gazebo | 모든 노드 (`use_sim_time: true`) | — |
+
+- `/cmd_vel` 은 **`TwistStamped`** (Lyrical Nav2 기본). `Twist` 로 보내면 로봇이 움직이지 않습니다.
+- Gazebo 모델 이름 `amr_1` = `apc_amr/config/zones.yaml` 의 `robot_id`.
+- 로봇을 바꿀 때는 `apc_simulation/apc_simulation/amr_robot.py` 와 `amr_bridge.yaml` 만 수정합니다.
+
+### 2-2. 좌표계 (REP-105)
+```
+map ──(Nav2: AMCL 또는 SLAM, 🅑)──▶ odom ──(Gazebo DiffDrive)──▶ base_footprint
+    ──(robot_state_publisher)──▶ base_link ──▶ base_scan / 바퀴 / camera_link
+```
+- `map` = 월드 좌표 (구역 좌표 `zones.yaml`, 로봇 시작 위치 `amr_x/amr_y` 모두 이 기준).
+- Nav2 `robot_base_frame` 은 `base_footprint` 권장 (TurtleBot3 기본).
 
 ## 3. 메시지 정의 (`src/apc_interfaces/msg/`)
 
