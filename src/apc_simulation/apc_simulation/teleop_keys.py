@@ -4,6 +4,7 @@
   w / ↑ : 앞으로      s / ↓ : 뒤로
   a / ← : 왼쪽 회전   d / → : 오른쪽 회전
   space / x : 즉시 정지
+  f         : Gazebo 시점이 로봇 따라가기 켜기/끄기 (노드에서 처리)
 
 터미널은 '키를 뗐다' 는 신호가 없고, 키를 누르고 있으면 같은 글자가 반복 입력된다.
 그래서 마지막 입력 후 hold_timeout 초 동안 새 입력이 없으면 멈춘 것으로 본다
@@ -21,6 +22,7 @@ KEY_DIRECTIONS: dict[str, tuple[int, int]] = {
 }
 STOP_KEYS = {'space', 'x'}
 QUIT_KEYS = {'q', 'ctrl-c'}
+FOLLOW_KEYS = {'f'}
 
 _ARROWS = {'A': 'up', 'B': 'down', 'C': 'right', 'D': 'left'}
 

@@ -14,7 +14,7 @@
 #   bash scripts/run_apc.sh -- spawn_apples:=false  # -- 뒤는 launch 인자로 그대로 전달
 #
 # 키보드 조종 (기본): 시뮬이 켜지면 이 터미널에서 바로 로봇을 움직일 수 있음
-#   w/↑ 앞  s/↓ 뒤  a/← 왼쪽  d/→ 오른쪽  (누르고 있는 동안만)  space 정지
+#   w/↑ 앞  s/↓ 뒤  a/← 왼쪽  d/→ 오른쪽  (누르고 있는 동안만)  space 정지  f 시점 따라가기
 #   q 또는 Ctrl+C → 조종과 시뮬 모두 종료.  launch 로그는 log/run_apc/ 에 저장
 #
 # 하는 일:

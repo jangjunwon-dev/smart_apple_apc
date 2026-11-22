@@ -29,6 +29,10 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_teleop_keys test/test_teleop_keys.py
     APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
   )
+  # 시점 따라가기 gz 명령 만들기
+  ament_add_pytest_test(test_camera_follow test/test_camera_follow.py
+    APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
+  )
   # 월드 구역 좌표 ↔ apc_amr/config/zones.yaml 일치 검사
   ament_add_pytest_test(test_zones_consistency test/test_zones_consistency.py)
 endif()

@@ -159,7 +159,8 @@ bash scripts/run_apc.sh --help         # 옵션 전체 (--headless, --sphere, --
   cd ~/apc_ws && rosdep install --from-paths src --ignore-src -y   # turtlebot3_gazebo 설치
   ```
 - **키보드로 로봇 조종**: `bash scripts/run_apc.sh` 로 켜면 **그 터미널에서 바로** 조종됩니다 (Gazebo 창이 아니라 터미널을 클릭한 상태로).
-  `w`/`↑` 앞 · `s`/`↓` 뒤 · `a`/`←` 왼쪽 · `d`/`→` 오른쪽 — 누르고 있는 동안만 움직임, `space` 정지, `q` 또는 `Ctrl+C` 로 시뮬까지 종료.
+  `w`/`↑` 앞 · `s`/`↓` 뒤 · `a`/`←` 왼쪽 · `d`/`→` 오른쪽 — 누르고 있는 동안만 움직임, `space` 정지, **`f` 시점이 로봇 따라가기 켜기/끄기**, `q` 또는 `Ctrl+C` 로 시뮬까지 종료.
+  (`f` 가 안 되면 Gazebo 창 Entity Tree 에서 `amr_1` 우클릭 → Follow)
   이때 launch 로그는 `log/run_apc/latest.log` 에 저장됩니다 (`tail -f log/run_apc/latest.log`).
   시뮬을 따로 띄웠다면 새 터미널에서 `ros2 run apc_simulation amr_teleop`
   (속도 변경: `--ros-args -p linear_speed:=0.15 -p angular_speed:=0.8`)
