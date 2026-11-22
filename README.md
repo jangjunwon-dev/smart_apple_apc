@@ -142,6 +142,7 @@ bash scripts/run_apc.sh --help         # 옵션 전체 (--headless, --sphere, --
 | #20 | 선별 카메라 확대 (시야 0.3 rad, 30Hz) | 시뮬 사과 판정 0% → 100% |
 | #22 | 비전: 지름 = 짧은 축 중앙값, 여러 프레임 신뢰도 투표 | 판정 안정화 |
 | #23 | 사과 기본 외형 `ycb`(실제 사과 3D 스캔), 시작 직후 사과 2개 붙어 나오던 버그 수정 | 검출 75% → 거의 100%, 사과 간격 정확히 4초 |
+| #26 | AMR 로봇 TurtleBot3 Waffle(임시) + `/cmd_vel`·`/odom`·`/scan`·`/tf` 브리지 | 로봇이 월드에 자동 등장, rosdep install 필요 |
 
 ### 6. 지금 정해야 할 것 (1단계 마감 11/24)
 - **등급 기준값** — 초안: 최종 등급 = (YOLO 품질 등급, 지름 크기 등급) 중 더 낮은 쪽.
@@ -150,13 +151,19 @@ bash scripts/run_apc.sh --help         # 옵션 전체 (--headless, --sphere, --
 - **인터페이스 최종 합의** — `AppleGrade`, `AmrStatus` 를 3명이 확인.
 - **3명 환경 점검** — `bash scripts/check_env.sh` 결과를 단톡에 공유.
 
-### 7. AMR 로봇 (진행 중)
-- Lyrical 에는 **TurtleBot4 패키지가 없음**. **TurtleBot3**(`ros-lyrical-turtlebot3-gazebo`), **slam_toolbox**, **Nav2 1.5.2** 는 설치 가능 확인.
-- 그래서 🅒 가 **TurtleBot3 Waffle 을 임시 기본 로봇**으로 월드에 넣는 작업을 시작합니다 (`/cmd_vel`, `/odom`, `/scan` 브리지, 시작 위치는 launch 인자).
-  다른 로봇을 원하면 🅑 박해원 님이 알려 주세요.
-- 로봇이 들어가면 미리 설치해 두기: `sudo apt install -y ros-lyrical-turtlebot3-gazebo`
+### 7. AMR 로봇 — TurtleBot3 Waffle (임시) 추가됨 (#26)
+- Lyrical 에는 **TurtleBot4 패키지가 없어서** **TurtleBot3 Waffle** 을 임시 기본 로봇으로 넣었습니다. 다른 로봇이 좋으면 🅑 박해원 님이 알려 주세요.
+- ⚠️ **pull 후 한 번 꼭 실행** (안 하면 시뮬이 안 켜짐):
+  ```bash
+  cd ~/apc_ws && rosdep install --from-paths src --ignore-src -y   # turtlebot3_gazebo 설치
+  ```
+- 실행하면 로봇이 (1.5, 0) 에 자동으로 나옵니다. 로봇 없이: `spawn_amr:=false`, 위치 변경: `amr_x:=1.0 amr_y:=-1.0 amr_yaw:=1.57`
+- 토픽: `/cmd_vel`(TwistStamped) · `/odom` · `/scan` · `/tf` · `/joint_states`, 프레임 `odom → base_footprint → base_link → base_scan`
+- 로봇이 있으면 배경 월드 RTF 가 약 0.7 로 떨어짐(라이다 렌더링) → **Nav2 개발은 기본 월드**에서 (RTF 약 0.92)
+- 로봇 교체: `src/apc_simulation/apc_simulation/amr_robot.py` 상수 + `config/amr_bridge.yaml` 만 수정
+- `slam_toolbox`, Nav2 1.5.2 는 Lyrical 에서 설치 가능
 
 ### 8. 파트별 부탁
 - 🅐 조한서: 로드맵 🅐 체크박스 중 끝난 것 체크 / `/apc/apple_grade` 의 `header.stamp` 가 0 이라 판정 시각 넣기
 - 🅑 박해원: GitHub 저장소 초대 수락 확인 / `check_env.sh` 결과 공유 / 로봇 종류·시작 위치·맵 방식(SLAM 또는 월드 기준 직접 작성) 의견
-- 🅒 장준원: TurtleBot3 월드 추가 → Nav2 용 브리지 확인 → 시연 영상
+- 🅒 장준원: 등급 기준 확정 후 시연용 비상품 사과 옵션 → 시연 영상
