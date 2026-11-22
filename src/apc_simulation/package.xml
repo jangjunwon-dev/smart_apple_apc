@@ -17,6 +17,10 @@
   <exec_depend>rclpy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>rcl_interfaces</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <!-- AMR 로봇 (TurtleBot3 Waffle, 임시): 모델 SDF·URDF·메시 -->
+  <exec_depend>turtlebot3_gazebo</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
 
   <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>python3-pytest</test_depend>

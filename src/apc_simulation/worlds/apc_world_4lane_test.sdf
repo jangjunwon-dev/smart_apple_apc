@@ -9,7 +9,8 @@
   - 컨베이어 끝 아래의 논리 카메라(apple_sink)가 떨어진 사과 이름을 발행 → 노드가 삭제
   - 벨트 속도: /model/conveyor/link/belt/track_cmd_vel (gz.msgs.Double, m/s)
   - 구역 좌표는 src/apc_amr/config/zones.yaml 과 일치시킬 것
-  TODO(🅒): AMR(TurtleBot4 등) 추가, Nav2 맵 생성
+  - AMR(TurtleBot3 Waffle, 임시)은 월드에 넣지 않고 launch/amr.launch.py 가 스폰 (spawn_amr 인자)
+  TODO(🅑): Nav2 맵 생성
 -->
 <sdf version="1.9">
   <world name="apc_world">

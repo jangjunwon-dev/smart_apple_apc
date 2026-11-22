@@ -1,0 +1,48 @@
+# AMR(TurtleBot3 Waffle, 임시) ROS ↔ Gazebo 브리지 — amr.launch.py 의 amr_gz_bridge 가 읽음
+# gz 토픽 이름은 turtlebot3_gazebo/models/turtlebot3_waffle/model.sdf 의 플러그인·센서 설정과 같아야 함
+# /clock 은 sim.launch.py 의 apc_gz_bridge 가 이미 브리지하므로 여기 넣지 않음
+# 로봇을 바꾸면 이 파일의 gz_topic_name 을 새 SDF 에 맞춰 고칠 것
+
+# Nav2(Lyrical) 기본이 TwistStamped → gz DiffDrive 의 gz.msgs.Twist 로 변환
+- ros_topic_name: "cmd_vel"
+  gz_topic_name: "cmd_vel"
+  ros_type_name: "geometry_msgs/msg/TwistStamped"
+  gz_type_name: "gz.msgs.Twist"
+  direction: ROS_TO_GZ
+
+# DiffDrive: odom (frame odom → child base_footprint, 30 Hz)
+- ros_topic_name: "odom"
+  gz_topic_name: "odom"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "gz.msgs.Odometry"
+  direction: GZ_TO_ROS
+
+# DiffDrive: odom → base_footprint 변환
+- ros_topic_name: "tf"
+  gz_topic_name: "tf"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  gz_type_name: "gz.msgs.Pose_V"
+  direction: GZ_TO_ROS
+
+# gpu_lidar: frame base_scan, 10 Hz, 360 샘플, 0.12~3.5 m
+- ros_topic_name: "scan"
+  gz_topic_name: "scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS
+
+# 바퀴 관절 → robot_state_publisher 가 바퀴 tf 발행
+- ros_topic_name: "joint_states"
+  gz_topic_name: "joint_states"
+  ros_type_name: "sensor_msgs/msg/JointState"
+  gz_type_name: "gz.msgs.Model"
+  direction: GZ_TO_ROS
+
+# /imu: 현재 월드에 gz-sim-imu-system 플러그인이 없어 발행되지 않음.
+#   필요하면 apc_world.sdf 에 <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/> 추가
+#   (+ scripts/gen_preview_world.py, scripts/make_4lane.py 재생성) 후 아래 주석 해제
+# - ros_topic_name: "imu"
+#   gz_topic_name: "imu"
+#   ros_type_name: "sensor_msgs/msg/Imu"
+#   gz_type_name: "gz.msgs.IMU"
+#   direction: GZ_TO_ROS

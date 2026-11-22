@@ -3,7 +3,9 @@
 ros2 launch apc_bringup apc_all.launch.py vision_mock:=false amr_mock:=true
 ros2 launch apc_bringup apc_all.launch.py world:=apc_world_v2_preview.sdf headless:=true
 ros2 launch apc_bringup apc_all.launch.py apple_model:=sphere   # 단색 구 외형 (기본은 ycb)
-  - world, headless, spawn_apples, apple_model 은 apc_simulation/sim.launch.py 로 그대로 넘김
+ros2 launch apc_bringup apc_all.launch.py amr_x:=1.0 amr_y:=-1.0   # AMR 시작 위치 변경
+  - world, headless, spawn_apples, apple_model, spawn_amr, amr_x/amr_y/amr_yaw 는
+    apc_simulation/sim.launch.py 로 그대로 넘김
     (기본값도 sim.launch.py 와 같음 → 인자 없이 실행하면 sim.launch.py 단독 실행과 같은 월드·외형)
 """
 import os
@@ -22,6 +24,10 @@ SIM_ARGS = [
     ('headless', 'false', 'true 면 GUI 없이 gz sim 서버만 실행'),
     ('spawn_apples', 'true', '사과 주기적 생성/삭제 노드 실행 여부'),
     ('apple_model', 'ycb', '사과 외형: ycb(YCB 3D 스캔 메시) | sphere(단색 구)'),
+    ('spawn_amr', 'true', 'AMR 로봇(TurtleBot3 Waffle, 임시) 스폰 + 브리지 실행 여부'),
+    ('amr_x', '1.5', 'AMR 시작 x [m] (월드 좌표)'),
+    ('amr_y', '0.0', 'AMR 시작 y [m] (월드 좌표)'),
+    ('amr_yaw', '0.0', 'AMR 시작 방향 [rad] (0 = +x, zone B 쪽)'),
 ]
 
 
