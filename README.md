@@ -97,18 +97,25 @@ source /opt/ros/lyrical/setup.bash && source .venv/bin/activate
 python -m colcon build --symlink-install && source install/setup.bash
 ```
 
-### 2. 실제 비전(YOLO)까지 켜고 실행하기
+### 2. 실행하기 — `scripts/run_apc.sh` 한 줄이면 됩니다
+환경 설정(ROS·venv source, WSL GPU 렌더링), 남은 Gazebo 확인, 모델 파일 확인까지 스크립트가 알아서 합니다.
 ```bash
-# WSL 에서 Gazebo 카메라가 GPU 로 그리도록 설정 (없으면 카메라 영상이 검게 나옴)
-export GALLIUM_DRIVER=d3d12 MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA
-
-ls ~/apc_ws/models/apple_grader.pt   # 없으면 공유 드라이브 models/ 에서 받아 이 위치에 두기
-ros2 launch apc_bringup apc_all.launch.py vision_mock:=false amr_mock:=true
-
-# 새 터미널에서 판정 결과 보기 (사과 1개당 1번 찍힘)
-ros2 topic echo /apc/apple_grade
+cd ~/apc_ws
+bash scripts/run_apc.sh --build        # 처음 한 번 / 코드 받은 직후: 빌드 + 실행
+bash scripts/run_apc.sh                # 기본 월드 + 실제 YOLO 판정 + AMR mock
+bash scripts/run_apc.sh --preview      # 창고 배경 월드 (시연용, 더 무거움)
+bash scripts/run_apc.sh --mock-vision  # YOLO 없이 무작위 등급
+bash scripts/run_apc.sh --help         # 옵션 전체 (--headless, --sphere, -- 뒤 launch 인자 전달)
 ```
+- 비전 모델 `~/apc_ws/models/apple_grader.pt` 가 없으면 자동으로 mock 판정으로 바뀝니다 → [공유 드라이브](https://drive.google.com/drive/folders/1pAv_fzKDRd6Efjm4E63q6t5o_J5rNcx2) `models/` 에서 받아 그 위치에 두세요.
+- 판정 결과는 **새 터미널**에서 봅니다 (사과 1개당 1번 찍힘, `grade` 0=특 1=상 2=보통 3=비상품):
+  ```bash
+  cd ~/apc_ws && source /opt/ros/lyrical/setup.bash && source install/setup.bash
+  ros2 topic echo /apc/apple_grade
+  ```
 - 종료는 `Ctrl+C`. 끝날 때 `Segmentation fault (exit 139)` 가 떠도 Gazebo 자체의 알려진 현상이라 괜찮습니다.
+- 스크립트 없이 직접 실행하려면: `ros2 launch apc_bringup apc_all.launch.py vision_mock:=false amr_mock:=true`
+  (WSL 에서 카메라가 검게 나오면 `export GALLIUM_DRIVER=d3d12`, NVIDIA GPU 면 `export MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA` 도)
 
 ### 3. `apc_all.launch.py` 실행 옵션
 | 인자 | 기본값 | 설명 |
