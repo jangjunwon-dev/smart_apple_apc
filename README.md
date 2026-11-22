@@ -102,7 +102,8 @@ python -m colcon build --symlink-install && source install/setup.bash
 ```bash
 cd ~/apc_ws
 bash scripts/run_apc.sh --build        # 처음 한 번 / 코드 받은 직후: 빌드 + 실행
-bash scripts/run_apc.sh                # 기본 월드 + 실제 YOLO 판정 + AMR mock
+bash scripts/run_apc.sh                # 기본 월드 + 실제 YOLO 판정 + 이 터미널에서 바로 키보드로 로봇 조종
+bash scripts/run_apc.sh --no-teleop    # 조종 없이 launch 로그를 이 터미널에 출력 (예전 방식)
 bash scripts/run_apc.sh --preview      # 창고 배경 월드 (시연용, 더 무거움)
 bash scripts/run_apc.sh --mock-vision  # YOLO 없이 무작위 등급
 bash scripts/run_apc.sh --help         # 옵션 전체 (--headless, --sphere, -- 뒤 launch 인자 전달)
@@ -157,13 +158,11 @@ bash scripts/run_apc.sh --help         # 옵션 전체 (--headless, --sphere, --
   ```bash
   cd ~/apc_ws && rosdep install --from-paths src --ignore-src -y   # turtlebot3_gazebo 설치
   ```
-- **키보드로 로봇 조종** (시뮬 실행 중, 새 터미널):
-  ```bash
-  cd ~/apc_ws && source /opt/ros/lyrical/setup.bash && source install/setup.bash
-  ros2 run apc_simulation amr_teleop
-  ```
-  `w`/`↑` 앞 · `s`/`↓` 뒤 · `a`/`←` 왼쪽 · `d`/`→` 오른쪽 — 누르고 있는 동안만 움직임, `space` 정지, `q` 종료
-  (그 터미널을 클릭한 상태로 눌러야 함. 속도 변경: `--ros-args -p linear_speed:=0.15 -p angular_speed:=0.8`)
+- **키보드로 로봇 조종**: `bash scripts/run_apc.sh` 로 켜면 **그 터미널에서 바로** 조종됩니다 (Gazebo 창이 아니라 터미널을 클릭한 상태로).
+  `w`/`↑` 앞 · `s`/`↓` 뒤 · `a`/`←` 왼쪽 · `d`/`→` 오른쪽 — 누르고 있는 동안만 움직임, `space` 정지, `q` 또는 `Ctrl+C` 로 시뮬까지 종료.
+  이때 launch 로그는 `log/run_apc/latest.log` 에 저장됩니다 (`tail -f log/run_apc/latest.log`).
+  시뮬을 따로 띄웠다면 새 터미널에서 `ros2 run apc_simulation amr_teleop`
+  (속도 변경: `--ros-args -p linear_speed:=0.15 -p angular_speed:=0.8`)
 - 실행하면 로봇이 (1.5, 0) 에 자동으로 나옵니다. 로봇 없이: `spawn_amr:=false`, 위치 변경: `amr_x:=1.0 amr_y:=-1.0 amr_yaw:=1.57`
 - 토픽: `/cmd_vel`(TwistStamped) · `/odom` · `/scan` · `/tf` · `/joint_states`, 프레임 `odom → base_footprint → base_link → base_scan`
 - 로봇이 있으면 배경 월드 RTF 가 약 0.7 로 떨어짐(라이다 렌더링) → **Nav2 개발은 기본 월드**에서 (RTF 약 0.92)
