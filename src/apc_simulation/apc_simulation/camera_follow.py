@@ -49,9 +49,9 @@ def parse_list(output: str) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
-# 따라가기 끄기: Jetty GUI 는 /gui/track 에 'track_mode: NONE' 을 보내도 계속 따라감.
-# /gui/move_to/pose 로 시점을 옮기면 따라가기가 풀리므로, 현재 시점(/gui/camera/pose)
-# 그대로 옮겨서 화면이 튀지 않게 끈다. 현재 시점을 못 읽으면 컨베이어가 보이는 기본 시점.
+# 참고: Jetty GUI 는 /gui/track 'track_mode: NONE' 이나 /gui/move_to/pose 로는 따라가기가
+# 풀리지 않고, Gazebo 창에서 Esc 를 눌러야 풀림 (2026-11-22 실측). 아래 함수는 시점을 특정
+# 위치로 옮길 때 쓸 수 있도록 남겨 둠.
 # ---------------------------------------------------------------------------
 CAMERA_POSE_TOPIC = '/gui/camera/pose'
 MOVE_TO_POSE_SERVICE = '/gui/move_to/pose'

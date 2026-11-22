@@ -5,7 +5,7 @@
   ros2 run apc_simulation amr_teleop --ros-args -p linear_speed:=0.15 -p angular_speed:=0.8
 
   w / ↑ 앞   s / ↓ 뒤   a / ← 왼쪽 회전   d / → 오른쪽 회전
-  누르고 있는 동안만 움직이고, 떼면 멈춤.  space / x 즉시 정지,  f 시점이 로봇 따라가기 켜기/끄기,  q 또는 Ctrl+C 종료
+  누르고 있는 동안만 움직이고, 떼면 멈춤.  space / x 즉시 정지,  f 시점이 로봇 따라가기 (풀기: Gazebo 창 클릭 후 Esc),  q 또는 Ctrl+C 종료
   ※ 이 터미널 창을 클릭해 둔 상태에서 눌러야 함 (Gazebo 창이 아니라)
   ※ 터미널은 키 두 개를 동시에 못 받아서 '앞 + 회전' 같은 대각선 이동은 안 됨
 
@@ -29,10 +29,7 @@ import rclpy
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 
-from apc_simulation.camera_follow import (
-    CAMERA_POSE_TOPIC, OVERVIEW_POSE, follow_command, move_to_pose_command, parse_list,
-    parse_pose,
-)
+from apc_simulation.camera_follow import follow_command, parse_list
 from apc_simulation.teleop_keys import FOLLOW_KEYS, QUIT_KEYS, TeleopState, parse_keys
 
 HELP = """
@@ -41,7 +38,7 @@ HELP = """
    w / ↑ : 앞      s / ↓ : 뒤
    a / ← : 왼쪽    d / → : 오른쪽   (제자리 회전)
    누르고 있는 동안만 움직임
-   f : 시점이 로봇 따라가기 켜기/끄기
+   f : 시점이 로봇 따라가기 (풀기: Gazebo 창 클릭 후 Esc)
    space / x : 정지    q / Ctrl+C : 종료
 ---------------------------------------------"""
 
@@ -102,17 +99,14 @@ class AmrTeleopNode(Node):
                 return
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             out = (res.stdout + res.stderr).strip()
-            if res.returncode == 0 and not want:
-                # Jetty 는 끄기 신호만으로 안 풀림 → 현재 시점 그대로 move_to 해서 풀기
-                pose = parse_pose(_gz_output(
-                    ['gz', 'topic', '-e', '-t', CAMERA_POSE_TOPIC, '-n', '1'])) or OVERVIEW_POSE
-                res = subprocess.run(move_to_pose_command(pose), capture_output=True,
-                                     text=True, timeout=5)
-                out = (res.stdout + res.stderr).strip()
             if res.returncode == 0 and 'false' not in out.lower():
                 self.following = want
-                self.get_logger().info(
-                    f'시점: {self.follow_target} 따라가기 ' + ('켬 (다시 f 로 끄기)' if want else '끔'))
+                if want:
+                    self.get_logger().info(
+                        f'시점: {self.follow_target} 따라가기 켬 — 풀 때는 Gazebo 창을 클릭하고 Esc')
+                else:
+                    # Jetty GUI 는 /gui/track NONE·move_to 로는 안 풀리고 Esc 로만 풀림 (실측)
+                    self.get_logger().info('시점 따라가기를 풀려면 Gazebo 창을 클릭하고 Esc 를 누르세요')
             else:
                 self.get_logger().warning(
                     f'시점 따라가기 실패 ({" ".join(cmd[:4])}): {out[:200]} — '
