@@ -8,6 +8,7 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-24.04
+    timeout-minutes: 30          # 설치가 멈춰도 30분 뒤 실패로 끝냄
     container: ros:lyrical-ros-base
     defaults:
       run:
@@ -19,8 +20,9 @@ jobs:
         run: |
           apt-get update
           rosdep update
+          # Gazebo·로봇 모델은 테스트에 필요 없고 설치가 커서(수백 MB) 건너뜀
           rosdep install --from-paths src --ignore-src -y \
-            --skip-keys "ros_gz_sim ros_gz_bridge ros_gz_interfaces cv_bridge nav2_msgs"
+            --skip-keys "ros_gz_sim ros_gz_bridge ros_gz_interfaces cv_bridge nav2_msgs turtlebot3_gazebo robot_state_publisher"
           apt-get install -y python3-pytest
 
       - name: 빌드
