@@ -35,3 +35,4 @@ Thumbs.db
 # 비밀
 .env
 *.key
+logs/
