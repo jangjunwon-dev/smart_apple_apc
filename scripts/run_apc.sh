@@ -25,9 +25,9 @@
 #   5. ros2 launch apc_bringup apc_all.launch.py 실행
 #      (기본: 백그라운드로 띄우고 이 터미널은 키보드 조종 / --no-teleop: 이 터미널에서 실행)
 #
-# 판정 결과 보기 (새 터미널):
+# 판정 결과 보기 (새 터미널, 한국어):
 #   source /opt/ros/lyrical/setup.bash && source ~/apc_ws/install/setup.bash
-#   ros2 topic echo /apc/apple_grade
+#   ros2 run apc_simulation grade_monitor
 # 종료: Ctrl+C  (끝날 때 'Segmentation fault (exit 139)' 는 Gazebo 자체 현상이라 무시)
 # =============================================================================
 set -eo pipefail
@@ -125,7 +125,7 @@ done
 
 echo "🚀 월드=${WORLD}  비전=$([[ $VISION_MOCK == true ]] && echo mock || echo YOLO)  " \
      "AMR=mock  사과=${APPLE_MODEL}  headless=${HEADLESS}"
-echo "   판정 결과: 새 터미널에서 ros2 topic echo /apc/apple_grade"
+echo "   판정 결과(한국어): 새 터미널에서 ros2 run apc_simulation grade_monitor"
 
 if [[ "$TELEOP" -eq 0 ]]; then
   exec ros2 launch apc_bringup apc_all.launch.py "${LAUNCH_ARGS[@]}"
