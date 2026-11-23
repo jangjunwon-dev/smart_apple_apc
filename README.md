@@ -105,6 +105,47 @@ smart_apple_apc/              (= ~/apc_ws, colcon 워크스페이스 루트)
   [누적] 총 5개: 특 1 / 상 1 / 보통 2 / 비상품 1
   ```
 
+### 🎮 로봇(AMR) 키보드 조종 방법
+`bash scripts/run_apc.sh` 를 실행하면 Gazebo 가 뜬 뒤 **그 터미널이 바로 조종기**가 됩니다.
+
+| 키 | 동작 |
+|---|---|
+| `w` 또는 `↑` | 앞으로 (0.2 m/s) |
+| `s` 또는 `↓` | 뒤로 |
+| `a` 또는 `←` | 왼쪽으로 제자리 회전 (1.0 rad/s) |
+| `d` 또는 `→` | 오른쪽으로 제자리 회전 |
+| `space` 또는 `x` | 즉시 정지 |
+| `f` | Gazebo 시점(카메라)이 로봇을 따라가기 |
+| Gazebo 창 클릭 → `Esc` | 시점 따라가기 풀기 |
+| `q` 또는 `Ctrl+C` | 조종 종료 + 시뮬까지 함께 종료 |
+
+**사용 순서**
+1. `cd ~/apc_ws && bash scripts/run_apc.sh` (코드를 새로 받았으면 `--build` 추가)
+2. Gazebo 창에 컨베이어·사과·로봇(`amr_1`)이 보일 때까지 10~20초 기다리기
+3. **터미널을 마우스로 한 번 클릭** — Gazebo 창이 아니라 터미널이 키를 받습니다
+4. 키를 **꾹 누르고 있으면** 계속 움직이고, 떼면 약 0.6초 뒤 멈춤 (터미널 화면에 `속도: 앞뒤 +0.20 m/s ...` 표시)
+5. `f` 를 누르면 시점이 로봇 뒤 위쪽에서 따라옴 → 자유 시점으로 돌아가려면 Gazebo 창 클릭 후 `Esc`, 다시 운전하려면 **터미널을 다시 클릭**
+
+**알아 둘 것**
+- 키 두 개를 동시에 못 받아서 "앞으로 가면서 회전"(대각선)은 안 됩니다. 앞 → 멈춤 → 회전 순서로 조종하세요.
+- Caps Lock 이 켜져 있어도(대문자) 똑같이 동작합니다.
+- 속도 바꾸기 / 시뮬을 따로 띄운 경우 조종만 실행:
+  ```bash
+  cd ~/apc_ws && source /opt/ros/lyrical/setup.bash && source install/setup.bash
+  ros2 run apc_simulation amr_teleop --ros-args -p linear_speed:=0.15 -p angular_speed:=0.8
+  ```
+- 조종 없이 예전처럼 로그를 터미널에 보고 싶으면 `bash scripts/run_apc.sh --no-teleop`
+- 조종 중 launch 로그는 `log/run_apc/latest.log` (다른 터미널에서 `tail -f log/run_apc/latest.log`)
+
+**안 될 때**
+| 증상 | 해결 |
+|---|---|
+| 키를 눌러도 로봇이 안 움직임 | 터미널을 클릭했는지 확인. 터미널에 `속도:` 줄이 안 찍히면 키가 Gazebo 창으로 가고 있는 것 |
+| `속도:` 는 찍히는데 로봇이 안 움직임 | Gazebo 가 아직 뜨는 중이거나 RTF 가 0 — 몇 초 기다리기. `pgrep -fc gz-sim-main` 이 2 이상이면 Gazebo 가 여러 개 떠 있음 → 아래 정리 후 다시 실행 |
+| `f` 를 눌러도 시점이 안 바뀜 | headless 실행이면 Gazebo 창이 없어서 안 됨. 아니면 Gazebo 창 Entity Tree 에서 `amr_1` 우클릭 → Follow |
+| `No executable found` | 빌드 전 — `bash scripts/run_apc.sh --build` |
+| 이전 실행이 남아 느림·꼬임 | `pkill -f gz-sim-main; pkill -f amr_teleop; pkill -f "ros2 launch apc"` 후 다시 실행 |
+
 ### 1. 최신 코드 받기 (매번 작업 전)
 ```bash
 cd ~/apc_ws && git switch main && git pull
@@ -183,12 +224,7 @@ bash scripts/run_apc.sh --help         # 옵션 전체 (--headless, --sphere, --
   ```bash
   cd ~/apc_ws && rosdep install --from-paths src --ignore-src -y   # turtlebot3_gazebo 설치
   ```
-- **키보드로 로봇 조종**: `bash scripts/run_apc.sh` 로 켜면 **그 터미널에서 바로** 조종됩니다 (Gazebo 창이 아니라 터미널을 클릭한 상태로).
-  `w`/`↑` 앞 · `s`/`↓` 뒤 · `a`/`←` 왼쪽 · `d`/`→` 오른쪽 — 누르고 있는 동안만 움직임, `space` 정지, **`f` 시점이 로봇 따라가기** (풀기: Gazebo 창을 클릭하고 `Esc`), `q` 또는 `Ctrl+C` 로 시뮬까지 종료.
-  (`f` 가 안 되면 Gazebo 창 Entity Tree 에서 `amr_1` 우클릭 → Follow)
-  이때 launch 로그는 `log/run_apc/latest.log` 에 저장됩니다 (`tail -f log/run_apc/latest.log`).
-  시뮬을 따로 띄웠다면 새 터미널에서 `ros2 run apc_simulation amr_teleop`
-  (속도 변경: `--ros-args -p linear_speed:=0.15 -p angular_speed:=0.8`)
+- **키보드로 로봇 조종**: 위 [🎮 로봇(AMR) 키보드 조종 방법](#-로봇amr-키보드-조종-방법) 참고 (`bash scripts/run_apc.sh` → 터미널 클릭 → `w a s d`)
 - 실행하면 로봇이 (1.5, 0) 에 자동으로 나옵니다. 로봇 없이: `spawn_amr:=false`, 위치 변경: `amr_x:=1.0 amr_y:=-1.0 amr_yaw:=1.57`
 - 토픽: `/cmd_vel`(TwistStamped) · `/odom` · `/scan` · `/tf` · `/joint_states`, 프레임 `odom → base_footprint → base_link → base_scan`
 - 로봇이 있으면 배경 월드 RTF 가 약 0.7 로 떨어짐(라이다 렌더링) → **Nav2 개발은 기본 월드**에서 (RTF 약 0.92)
