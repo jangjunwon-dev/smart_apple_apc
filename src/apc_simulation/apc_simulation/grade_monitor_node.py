@@ -11,6 +11,8 @@
 
 `ros2 topic echo /apc/apple_grade` 와 같은 내용을 사람이 읽기 쉽게 바꾼 것 (토픽은 구독만 함).
 """
+import signal
+
 from apc_interfaces.msg import AmrStatus, AppleGrade
 import rclpy
 from rclpy.executors import ExternalShutdownException
@@ -57,6 +59,8 @@ def main(args=None) -> None:
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
+        # Ctrl+C 는 터미널과 `ros2 run` 이 한 번씩 보내서 두 번 들어옴 → 정리 중엔 무시
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
         print(node.tally.summary(), flush=True)
         node.destroy_node()
         rclpy.try_shutdown()
