@@ -86,14 +86,30 @@ smart_apple_apc/              (= ~/apc_ws, colcon 워크스페이스 루트)
 
 ---
 
-## 📢 팀원 공지 — 지금 상태와 실행 방법 (2026-11-22 기준)
+## 📢 팀원 공지 — 지금 상태와 실행 방법 (2026-11-23 기준)
 
 > 최근 바뀐 내용을 한곳에 모았습니다. 작업 시작 전에 한 번 읽어 주세요. (작성: 🅒 장준원)
+
+### ⚡ 빠른 실행 — 터미널 2개면 끝
+| 터미널 | 명령 | 하는 일 |
+|---|---|---|
+| 1 | `cd ~/apc_ws && bash scripts/run_apc.sh` | 시뮬 실행 + **이 터미널에서 바로 키보드로 로봇 조종** (`w a s d` / 화살표, `f` 시점 따라가기, `q` 종료) |
+| 2 | `cd ~/apc_ws && source /opt/ros/lyrical/setup.bash && source install/setup.bash && ros2 run apc_simulation grade_monitor` | 사과 판정·AMR 상태를 **한국어로** 보기 |
+
+- 코드를 새로 받은 직후에는 터미널 1에서 `bash scripts/run_apc.sh --build` (빌드 + 실행)
+- 터미널 1 키보드 조종은 **그 터미널을 클릭한 상태**에서 눌러야 함. 시점 따라가기 풀기: Gazebo 창 클릭 후 `Esc`
+- 터미널 2 출력 예:
+  ```
+  [판정] 사과 #91   특     지름  89.3 mm  신뢰도  76%  → 구역 A   (시뮬 68.8초)
+  [AMR] amr_1  이동 중  사과 #91 → 구역 A  대기 작업 0개
+  [누적] 총 5개: 특 1 / 상 1 / 보통 2 / 비상품 1
+  ```
 
 ### 1. 최신 코드 받기 (매번 작업 전)
 ```bash
 cd ~/apc_ws && git switch main && git pull
 source /opt/ros/lyrical/setup.bash && source .venv/bin/activate
+rosdep install --from-paths src --ignore-src -y     # 새 의존성(예: turtlebot3_gazebo) 설치
 python -m colcon build --symlink-install && source install/setup.bash
 ```
 
@@ -147,13 +163,19 @@ bash scripts/run_apc.sh --help         # 옵션 전체 (--headless, --sphere, --
 | #22 | 비전: 지름 = 짧은 축 중앙값, 여러 프레임 신뢰도 투표 | 판정 안정화 |
 | #23 | 사과 기본 외형 `ycb`(실제 사과 3D 스캔), 시작 직후 사과 2개 붙어 나오던 버그 수정 | 검출 75% → 거의 100%, 사과 간격 정확히 4초 |
 | #26 | AMR 로봇 TurtleBot3 Waffle(임시) + `/cmd_vel`·`/odom`·`/scan`·`/tf` 브리지 | 로봇이 월드에 자동 등장, rosdep install 필요 |
+| #28 | 키보드 조종 `amr_teleop` (WASD·화살표, `f` 시점 따라가기), `run_apc.sh` 로 켜면 바로 조종 | 로그는 `log/run_apc/latest.log` |
+| #29 | 등급 = YOLO 품질 등급과 지름 크기 등급 중 낮은 쪽, `header.stamp` 판정 시각 | 등급이 특·상·보통·비상품으로 섞여 나옴 |
+| #31 | 아키텍처 문서에 AMR 토픽·좌표계 추가 | `docs/03_architecture.md` 2-1·2-2절 |
+| #32 | 4레인 시험 월드 재생성, 로봇 시작 위치 기본값 한곳(`amr_robot.py`)으로 | |
+| #33 | (🅐) `logs/` git 추적 해제, 판정 구역 25~75%·투표 6프레임, 🅐 로드맵 체크 | `git pull` 막히던 문제 해결 |
+| #34 | 판정·AMR 상태 한국어 모니터 `grade_monitor` | 위 "빠른 실행" 터미널 2 |
 
-### 6. 지금 정해야 할 것 (1단계 마감 11/24)
-- **등급 기준값** — 초안: 최종 등급 = (YOLO 품질 등급, 지름 크기 등급) 중 더 낮은 쪽.
-  지름은 표준규격 무게 구분을 사과를 구로 보고 근사 환산 → 특 ≥ 89mm / 상 83~89mm / 보통 76~83mm / 비상품 < 76mm.
-  지금 코드는 YOLO 클래스만 쓰고 `grading.py` 는 쓰이지 않음. 확정되면 `docs/02_roadmap.md` 결정 사항에 기록.
-- **인터페이스 최종 합의** — `AppleGrade`, `AmrStatus` 를 3명이 확인.
-- **3명 환경 점검** — `bash scripts/check_env.sh` 결과를 단톡에 공유.
+### 6. 1단계(인터페이스 확정, ~11/24) 남은 것
+- **등급 기준값** — 구현 완료(#29). 최종 등급 = (YOLO 품질 등급, 지름 크기 등급) 중 낮은 쪽, 크기 특 ≥ 89 / 상 ≥ 83 / 보통 ≥ 76 / 비상품 < 76 mm.
+  🅐 조한서 확인 완료, **🅑 박해원 확인만 남음** → 확인되면 로드맵 결정 사항 "확정"으로.
+  끄려면 `grader_node` 파라미터 `size_grading:=false` (예전처럼 YOLO 클래스만).
+- **인터페이스** — `AppleGrade`·`AmrStatus` 는 그대로, AMR 표준 토픽·좌표계는 #31 로 문서 반영 (Issue #30).
+- **3명 환경 점검** — `bash scripts/check_env.sh` 결과를 단톡에 공유 (🅑 미확인).
 
 ### 7. AMR 로봇 — TurtleBot3 Waffle (임시) 추가됨 (#26)
 - Lyrical 에는 **TurtleBot4 패키지가 없어서** **TurtleBot3 Waffle** 을 임시 기본 로봇으로 넣었습니다. 다른 로봇이 좋으면 🅑 박해원 님이 알려 주세요.
@@ -174,6 +196,6 @@ bash scripts/run_apc.sh --help         # 옵션 전체 (--headless, --sphere, --
 - `slam_toolbox`, Nav2 1.5.2 는 Lyrical 에서 설치 가능
 
 ### 8. 파트별 부탁
-- 🅐 조한서: 로드맵 🅐 체크박스 중 끝난 것 체크 / `/apc/apple_grade` 의 `header.stamp` 가 0 이라 판정 시각 넣기
-- 🅑 박해원: GitHub 저장소 초대 수락 확인 / `check_env.sh` 결과 공유 / 로봇 종류·시작 위치·맵 방식(SLAM 또는 월드 기준 직접 작성) 의견
-- 🅒 장준원: 등급 기준 확정 후 시연용 비상품 사과 옵션 → 시연 영상
+- 🅐 조한서: 시뮬 사과는 지름 70~96 mm 인데 가끔 **100 mm 넘게** 측정됨 (예: 105.1 mm) — 크기 등급이 실제보다 높게 나올 수 있어 확인 부탁
+- 🅑 박해원: 등급 기준·로봇(TurtleBot3 Waffle)·맵 방식(SLAM 또는 월드 기준 직접 작성) 확인 / `check_env.sh` 결과 공유 / Nav2 로 등급별 구역 운반 시작 (`amr_mock:=false`)
+- 🅒 장준원: 🅑 Nav2 연동 지원(필요하면 월드 기준 맵 생성) → 통합 테스트 → 시연 영상
