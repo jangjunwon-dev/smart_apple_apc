@@ -109,11 +109,14 @@ bash scripts/run_apc.sh --mock-vision  # YOLO 없이 무작위 등급
 bash scripts/run_apc.sh --help         # 옵션 전체 (--headless, --sphere, -- 뒤 launch 인자 전달)
 ```
 - 비전 모델 `~/apc_ws/models/apple_grader.pt` 가 없으면 자동으로 mock 판정으로 바뀝니다 → [공유 드라이브](https://drive.google.com/drive/folders/1pAv_fzKDRd6Efjm4E63q6t5o_J5rNcx2) `models/` 에서 받아 그 위치에 두세요.
-- 판정 결과는 **새 터미널**에서 봅니다 (사과 1개당 1번 찍힘, `grade` 0=특 1=상 2=보통 3=비상품):
+- 판정 결과는 **새 터미널**에서 **한국어로** 봅니다:
   ```bash
   cd ~/apc_ws && source /opt/ros/lyrical/setup.bash && source install/setup.bash
-  ros2 topic echo /apc/apple_grade
+  ros2 run apc_simulation grade_monitor
+  # [판정] 사과 #91   특   지름  89.3 mm  신뢰도  76%  → 구역 A   (시뮬 68.8초)
+  # [누적] 총 5개: 특 1 / 상 1 / 보통 2 / 비상품 1
   ```
+  원본 메시지 그대로 보려면 `ros2 topic echo /apc/apple_grade` (`grade` 0=특 1=상 2=보통 3=비상품)
 - 종료는 `Ctrl+C`. 끝날 때 `Segmentation fault (exit 139)` 가 떠도 Gazebo 자체의 알려진 현상이라 괜찮습니다.
 - 스크립트 없이 직접 실행하려면: `ros2 launch apc_bringup apc_all.launch.py vision_mock:=false amr_mock:=true`
   (WSL 에서 카메라가 검게 나오면 `export GALLIUM_DRIVER=d3d12`, NVIDIA GPU 면 `export MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA` 도)

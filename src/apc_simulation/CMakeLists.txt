@@ -7,8 +7,8 @@ find_package(ament_cmake_python REQUIRED)
 # 파이썬 모듈(apc_simulation/) 설치
 ament_python_install_package(${PROJECT_NAME})
 
-# 노드 실행 파일 (ros2 run apc_simulation apple_spawner_node / amr_teleop)
-install(PROGRAMS scripts/apple_spawner_node scripts/amr_teleop
+# 노드 실행 파일 (ros2 run apc_simulation apple_spawner_node / amr_teleop / grade_monitor)
+install(PROGRAMS scripts/apple_spawner_node scripts/amr_teleop scripts/grade_monitor
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -31,6 +31,10 @@ if(BUILD_TESTING)
   )
   # 시점 따라가기 gz 명령 만들기
   ament_add_pytest_test(test_camera_follow test/test_camera_follow.py
+    APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
+  )
+  # 판정·AMR 상태 한국어 표시
+  ament_add_pytest_test(test_monitor_format test/test_monitor_format.py
     APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
   )
   # 월드 구역 좌표 ↔ apc_amr/config/zones.yaml 일치 검사
