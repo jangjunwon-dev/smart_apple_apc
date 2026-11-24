@@ -162,6 +162,52 @@
     <model name="zone_R"><static>true</static><pose>0 -3 0.005 0 0 0</pose>
       <link name="l"><visual name="v"><geometry><box><size>1 1 0.01</size></box></geometry>
         <material><ambient>0.7 0.1 0.1 1</ambient><diffuse>0.7 0.1 0.1 1</diffuse></material></visual></link></model>
+    <!-- NAV_LANDMARKS_BEGIN
+         AMR 위치 추정(AMCL)용 기준물: 라이다(사거리 3.5 m)가 작업 구역 어디서든 볼 수 있게 둔 기둥·벽.
+         기둥 없이는 360빔 중 약 10빔만 맞아 x 방향 오차가 25 cm 까지 났음 (2026-11-24 검증).
+         배치: 컨베이어·카메라 시야·zone A/B/C/R·AMR 경로(출구↔각 zone)에서 1 m 이상 떨어지게, 비대칭으로.
+         배경 월드(gen_preview_world.py)는 자체 벽·랙이 있어 이 블록을 빼고 생성함. -->
+    <model name="nav_pillar_1"><static>true</static><pose>1.2 2.3 0.6 0 0 0</pose>
+      <link name="l">
+        <collision name="c"><geometry><box><size>0.3 0.3 1.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.3 0.3 1.2</size></box></geometry>
+          <material><ambient>0.6 0.6 0.58 1</ambient><diffuse>0.6 0.6 0.58 1</diffuse></material></visual></link></model>
+    <model name="nav_pillar_2"><static>true</static><pose>2.4 -2.5 0.6 0 0 0</pose>
+      <link name="l">
+        <collision name="c"><geometry><box><size>0.3 0.3 1.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.3 0.3 1.2</size></box></geometry>
+          <material><ambient>0.6 0.6 0.58 1</ambient><diffuse>0.6 0.6 0.58 1</diffuse></material></visual></link></model>
+    <model name="nav_pillar_3"><static>true</static><pose>-1.6 1.9 0.6 0 0 0</pose>
+      <link name="l">
+        <collision name="c"><geometry><box><size>0.3 0.3 1.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.3 0.3 1.2</size></box></geometry>
+          <material><ambient>0.6 0.6 0.58 1</ambient><diffuse>0.6 0.6 0.58 1</diffuse></material></visual></link></model>
+    <model name="nav_pillar_4"><static>true</static><pose>-1.8 -2.1 0.6 0 0 0</pose>
+      <link name="l">
+        <collision name="c"><geometry><box><size>0.3 0.3 1.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.3 0.3 1.2</size></box></geometry>
+          <material><ambient>0.6 0.6 0.58 1</ambient><diffuse>0.6 0.6 0.58 1</diffuse></material></visual></link></model>
+    <model name="nav_pillar_5"><static>true</static><pose>5.6 1.2 0.6 0 0 0</pose>
+      <link name="l">
+        <collision name="c"><geometry><box><size>0.3 0.3 1.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.3 0.3 1.2</size></box></geometry>
+          <material><ambient>0.6 0.6 0.58 1</ambient><diffuse>0.6 0.6 0.58 1</diffuse></material></visual></link></model>
+    <model name="nav_pillar_6"><static>true</static><pose>5.6 -1.4 0.6 0 0 0</pose>
+      <link name="l">
+        <collision name="c"><geometry><box><size>0.3 0.3 1.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.3 0.3 1.2</size></box></geometry>
+          <material><ambient>0.6 0.6 0.58 1</ambient><diffuse>0.6 0.6 0.58 1</diffuse></material></visual></link></model>
+    <model name="nav_wall_north"><static>true</static><pose>2.0 3.6 0.6 0 0 0</pose>
+      <link name="l">
+        <collision name="c"><geometry><box><size>2.5 0.1 1.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>2.5 0.1 1.2</size></box></geometry>
+          <material><ambient>0.6 0.6 0.58 1</ambient><diffuse>0.6 0.6 0.58 1</diffuse></material></visual></link></model>
+    <model name="nav_wall_east"><static>true</static><pose>6.0 0.0 0.6 0 0 0</pose>
+      <link name="l">
+        <collision name="c"><geometry><box><size>0.1 2.0 1.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.1 2.0 1.2</size></box></geometry>
+          <material><ambient>0.6 0.6 0.58 1</ambient><diffuse>0.6 0.6 0.58 1</diffuse></material></visual></link></model>
+    <!-- NAV_LANDMARKS_END -->
 
     <!-- ================= [4레인 시험] 성능 측정용 추가 요소 =================
          등급별 배출 레인 4개(특/상/보통/비상품) + 밀어내기 장치 4개(prismatic + JointPositionController)
