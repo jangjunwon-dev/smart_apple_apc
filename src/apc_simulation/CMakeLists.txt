@@ -12,7 +12,7 @@ install(PROGRAMS scripts/apple_spawner_node scripts/amr_teleop scripts/grade_mon
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY launch worlds config models
+install(DIRECTORY launch worlds config models maps
   DESTINATION share/${PROJECT_NAME}
 )
 
@@ -35,6 +35,10 @@ if(BUILD_TESTING)
   )
   # 판정·AMR 상태 한국어 표시
   ament_add_pytest_test(test_monitor_format test/test_monitor_format.py
+    APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
+  )
+  # 월드 → Nav2 지도 (시작 위치·구역이 비어 있는지, maps/ 가 최신인지)
+  ament_add_pytest_test(test_nav2_map test/test_nav2_map.py
     APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}
   )
   # 월드 구역 좌표 ↔ apc_amr/config/zones.yaml 일치 검사
