@@ -779,6 +779,11 @@ def main() -> None:
         sys.exit('사용법: python3 scripts/gen_preview_world.py [<원본.sdf> <결과.sdf>]')
     with open(src, encoding='utf-8') as f:
         base = f.read()
+    # 기본 월드의 AMCL 기준물(기둥·벽)은 빼고 생성 — 배경 월드는 자체 벽·랙·저장고가 있음
+    if '<!-- NAV_LANDMARKS_BEGIN' in base:
+        i = base.index('    <!-- NAV_LANDMARKS_BEGIN')
+        j = base.index('<!-- NAV_LANDMARKS_END -->') + len('<!-- NAV_LANDMARKS_END -->\n')
+        base = base[:i] + base[j:]
     world, crates, meshes, aisles = build(base)
     with open(dst, 'w', encoding='utf-8') as f:
         f.write(world)
