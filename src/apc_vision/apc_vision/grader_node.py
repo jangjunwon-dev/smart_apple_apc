@@ -44,7 +44,9 @@ class GraderNode(Node):
         self.declare_parameter('roi_axis', 'y')
         self.declare_parameter('roi_min_ratio', 0.25)
         self.declare_parameter('roi_max_ratio', 0.75)
-        self.declare_parameter('edge_margin_px', 8.0)
+        self.declare_parameter('edge_margin_px', 12.0)
+        self.declare_parameter('max_sample_diameter_mm', 100.0)
+        self.declare_parameter('max_diameter_mm', 98.0)
         self.declare_parameter('vote_frames', 6)
         self.declare_parameter('strict_grade_range', True)
         self.declare_parameter('log_dir', default_log_dir)
@@ -64,6 +66,8 @@ class GraderNode(Node):
         self.roi_min_ratio = float(self.get_parameter('roi_min_ratio').value)
         self.roi_max_ratio = float(self.get_parameter('roi_max_ratio').value)
         self.edge_margin_px = float(self.get_parameter('edge_margin_px').value)
+        self.max_sample_diameter_mm = float(self.get_parameter('max_sample_diameter_mm').value)
+        self.max_diameter_mm = float(self.get_parameter('max_diameter_mm').value)
         self.vote_frames = max(1, int(self.get_parameter('vote_frames').value))
         self.strict_grade_range = bool(self.get_parameter('strict_grade_range').value)
         self.log_dir = str(self.get_parameter('log_dir').value)
@@ -235,10 +239,8 @@ class GraderNode(Node):
         # 1) 지름: 그림자 한쪽 축 연장을 배제하기 위해 단축(min(w, h)) 기반 샘플들의 중앙값 사용
         diams = sorted(s[0] for s in samples)
         mid = len(diams) // 2
-        diameter_mm = round(
-            diams[mid] if len(diams) % 2 == 1 else (diams[mid - 1] + diams[mid]) / 2.0,
-            2,
-        )
+        raw_diam = diams[mid] if len(diams) % 2 == 1 else (diams[mid - 1] + diams[mid]) / 2.0
+        diameter_mm = round(min(raw_diam, self.max_diameter_mm), 2)
 
         # 2) 등급: ROI 내 누적 프레임의 신뢰도 가중 투표로 단일 프레임 흔들림 제거
         scores = defaultdict(float)
@@ -325,7 +327,12 @@ class GraderNode(Node):
                 if self._in_roi_and_not_clipped(x1, y1, x2, y2, cx, cy, w, h):
                     bw = max(0.0, x2 - x1)
                     bh = max(0.0, y2 - y1)
+                    if bw <= 0.0 or bh <= 0.0:
+                        continue
+                    aspect = max(bw, bh) / min(bw, bh)
                     diameter_mm = min(bw, bh) * self.mm_per_pixel
+                    if aspect > 1.35 or diameter_mm > self.max_sample_diameter_mm:
+                        continue
 
                     buf = self.track_buffers.setdefault(
                         track_id, {'samples': [], 'last_seen': now, 'last_pos': (cx, cy)}
